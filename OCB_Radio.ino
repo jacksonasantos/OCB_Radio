@@ -11,11 +11,11 @@
 #include <Adafruit_TFTLCD.h>                                    // Hardware-specific library
 #include <SPI.h>                                                // Habilita a comunicação com devices que usam o barramento SPI - Serial Peripheral Interface
 #include <radio.h>                                              // Radio FM
-#include <si4703.h>                                             // Controlador Radio
+#include <si4703.h>                                             // Controlar o chip do Radio
 #include <RDSParser.h>                                          // Controlar o conteudo do RDS
 #include <RotaryEncoder.h>                                      // Controlar os Encoder´s
 #include <DFRobotDFPlayerMini.h>                                // Controlar SD Mini Player
-#include <SoftwareSerial.h>
+#include <SoftwareSerial.h>                                     // Controlar a Serial por Software
 
 int                       vg_modo        = 2;                   // Variavel Global de modo de operacao (1-Setup/2-Radio FM/3-MP3)
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD
@@ -23,7 +23,6 @@ float                     v_colAnte      = 0;
 int                       btnMuteState   = 0;
 int                       btnModoState   = 0;
 int                       lastPosFrq     = -1;
-int                       v_ler_btModo   = 0;
 
 String                    BAND[]         = {"FM", "FM Mundo", "AM", "KW"};
 
@@ -181,9 +180,7 @@ void mostraTituloModo()
 //////////
 void loop() 
 { 
-  v_ler_btModo = digitalRead(btnModoPin);        // Leitura do Botao de MODO
-
-  if (v_ler_btModo == 1) {
+  if (digitalRead(btnModoPin) == 1) {            // Leitura do Botao de MODO
     vg_modo++;
     if (vg_modo > 3) {vg_modo = 1;}
     delay(50);
@@ -198,6 +195,4 @@ void loop()
      { executaMp3(); }
   
   limpaArea();
-
 } 
-
