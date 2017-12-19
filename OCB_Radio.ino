@@ -8,24 +8,20 @@
 #include <Arduino.h>                                            // Biblioteca Padrao Arduino
 #include <RTClib.h>                                             // Driver Relogio - Tiny RTC I2C
 #include <Adafruit_GFX.h>                                       // Biblioteca Grafica Principal
-#include <Adafruit_TFTLCD.h>                                    // Hardware-specific library
+#include <Adafruit_TFTLCD.h>                                    // Biblioteca Configuração Display LCD TFT
 #include <SPI.h>                                                // Habilita a comunicação com devices que usam o barramento SPI - Serial Peripheral Interface
 #include <radio.h>                                              // Radio FM
 #include <si4703.h>                                             // Controlador Radio
 #include <RDSParser.h>                                          // Controlar o conteudo do RDS
 #include <RotaryEncoder.h>                                      // Controlar os Encoder´s
-#include <DFRobotDFPlayerMini.h>                                // Controlar SD Mini Player
-#include <SoftwareSerial.h>
+#include <DFRobotDFPlayerMini.h>                                // Controlar Mini Player MP3 - SD
+#include <SoftwareSerial.h>                                     // Biblioteca de configuração da Serial através de Software
 
 int                       vg_modo        = 2;                   // Variavel Global de modo de operacao (1-Setup/2-Radio FM/3-MP3)
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD
 float                     v_colAnte      = 0;           
 int                       btnMuteState   = 0;
 int                       btnModoState   = 0;
-int                       lastPosFrq     = -1;
-int                       v_ler_btModo   = 0;
-
-String                    BAND[]         = {"FM", "FM Mundo", "AM", "KW"};
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis
@@ -90,14 +86,13 @@ void setup()
   limpaArea();
 
 #ifdef DEBUG
-  Serial.print("Inicializando Relógio... ");             // Inicializa o Relogio
+  Serial.print("Inicializando Relógio... ");             
 #endif  
-  if (!relogio.begin()) {
+  if (!relogio.begin()) {                                // Inicializa o Relogio
 #ifdef DEBUG 
     Serial.println("Falhou!");
 #endif    
     return;
-    // Inicializa relogio
   }
   else {
 #ifdef DEBUG
@@ -142,7 +137,7 @@ void setup()
   Serial.println("Radio OK!");
 #endif  
 
-  encoderFrq.setPosition(FIX_STATION / radio.getFrequencyStep());  
+  encoderFrq.setPosition(FIX_STATION / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Default
 
   mostraTituloModo();                                    // Atualiza Titulo do Botao de MODO
 
@@ -160,17 +155,16 @@ void mostraTituloModo()
 
   monitor.setTextSize(2);
   monitor.setTextColor(WHITE, BLUE);
-  monitor.setCursor(10, 5);
   switch(vg_modo)
   {
     case 1:
-      monitor.println("Setup  ");
+      imprimeTexto("Setup","E",5);
       break;
     case 2:
-      monitor.println("Radio  ");
+      imprimeTexto("Radio","E",5);
       break;
     case 3:
-      monitor.println("MP3    ");
+      imprimeTexto("MP3  ","E",5);
       break;
   }
   monitor.setTextColor(WHITE);
@@ -181,9 +175,7 @@ void mostraTituloModo()
 //////////
 void loop() 
 { 
-  v_ler_btModo = digitalRead(btnModoPin);        // Leitura do Botao de MODO
-
-  if (v_ler_btModo == 1) {
+  if (digitalRead(btnModoPin) == 1) {
     vg_modo++;
     if (vg_modo > 3) {vg_modo = 1;}
     delay(50);

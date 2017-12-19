@@ -6,6 +6,8 @@ void executaFM()
   unsigned long             _now           = millis();
   unsigned long             _nextFreqTime  = 1;
   int                       lastPosVol     = -1;
+  int                       lastPosFrq     = -1;
+  String                    BAND[]         = {"FM", "FM Mundo", "AM", "KW"};
 
   #define                   ROTARYSTEPS        1
   #define                   ROTARYMIN          0
