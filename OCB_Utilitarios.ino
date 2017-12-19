@@ -6,16 +6,16 @@ void iniciaTFT()
 #ifdef DEBUG
   Serial.print("Inicializando monitor... ");
 #endif  
-  monitor.reset();                                // Reinicia o tft
-  monitor.begin(vg_identifier);                   // Inicializa tft 
-  monitor.setRotation(3);                         // Ajusta o tft para ficar alinhado na horizontal
+  monitor.reset();                                		// Reinicia o tft
+  monitor.begin(vg_identifier);                   		// Inicializa tft 
+  monitor.setRotation(3);                         		// Ajusta o tft para ficar alinhado na horizontal
 #ifdef DEBUG
   Serial.println("OK!");
 #endif  
 }
 
 ///////////////////////
-// Introdução Radio  //
+// Introducao Radio  //
 ///////////////////////
 void telaIntroducao() 
 {
@@ -36,7 +36,7 @@ void telaIntroducao()
 }  
 
 ///////////////////////
-// Prepara o tft //
+// Prepara o tft     //
 ///////////////////////
 void preparaTFT() 
 {  
@@ -68,7 +68,7 @@ void preparaTFT()
 void imprimeTexto(String pTexto, String pAlinhamento, int pLinha)
 // pAlinhamento = "E"squerda (DEFAULT) - "C"entro - "D"ireita
 {
-  int _vcol = 5;
+  int _vcol     = 5;
   int _tamFonte = 8;
   
   switch(monitor.getTextSize())
@@ -86,9 +86,9 @@ void imprimeTexto(String pTexto, String pAlinhamento, int pLinha)
   if (pAlinhamento=="C")
      _vcol = ((monitor.width()-(pTexto.length()*_tamFonte))/2);
   else if (pAlinhamento=="D")
-          _vcol = (monitor.width()-pTexto.length()*_tamFonte);
+     _vcol = (monitor.width()-pTexto.length()*_tamFonte);
   else if (pAlinhamento=="E")
-          _vcol = 5;
+     _vcol = 5;
 
   monitor.setCursor(_vcol, pLinha);
   monitor.println( pTexto );

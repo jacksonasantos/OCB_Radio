@@ -3,17 +3,17 @@
 /////////////////////
 bool iniciaMP3()
 {
-  mySoftwareSerial.begin(9600);                          // Inicializa softwareSerial
-  if (!myDFPlayer.begin(mySoftwareSerial)) {             // Usa softwareSerial para comunicacar com mp3.
+  mySoftwareSerial.begin(9600);                         	// Inicializa softwareSerial
+  if (!mp3player.begin(mySoftwareSerial)) {             	// Usa softwareSerial para comunicacar com player
     return -1;
   }
   else {
-    myDFPlayer.reset();                                  // Reset the module
-    myDFPlayer.setTimeOut(500);                          // Define o time out (500ms) da comunicação serial
-    myDFPlayer.volume(FIX_VOLUME);                       // Define o volume inicial
-    myDFPlayer.EQ(DFPLAYER_EQ_CLASSIC);                      // Define a equalização do som
-    myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);         // Configura o tipo de device usar - SD as default
-    myDFPlayer.outputSetting(true, 15);                  // output setting, enable the output and set the gain to 15
+    mp3player.reset();                                  	// Reset o modulo
+    mp3player.setTimeOut(500);                          	// Define o time out (500ms) da comunicacao serial
+    mp3player.volume(FIX_VOLUME);                       	// Define o volume inicial
+    mp3player.EQ(DFPLAYER_EQ_CLASSIC);                  	// Define a equalizacao do som
+    mp3player.outputDevice(DFPLAYER_DEVICE_SD);         	// Configura o tipo de device inicial a usar - SD eh default
+    mp3player.outputSetting(true, 15);                  	// output setting, enable the output and set the gain to 15
     return 1;
   }
 }
@@ -29,7 +29,7 @@ void executaMp3()
 #endif  
   if (!iniciaMP3()){
 #ifdef DEBUG
-     Serial.println("Falha");
+     Serial.println("Falhou!");
 #endif  
      return;
   }
@@ -45,59 +45,59 @@ void executaMp3()
   #define                   ROTARYMIN          0
   #define                   ROTARYMAX          30
 
-  encoderVol.setPosition(myDFPlayer.readVolume() / ROTARYSTEPS);
+  encoderVol.setPosition(mp3player.readVolume() / ROTARYSTEPS);
 
 /*  
   //----Mp3 control----
-  myDFPlayer.sleep();     //sleep
-  myDFPlayer.enableDAC();  //Enable On-chip DAC
-  myDFPlayer.disableDAC();  //Disable On-chip DAC
-  myDFPlayer.outputSetting(true, 15); //output setting, enable the output and set the gain to 15
-  myDFPlayer.volumeUp(); //Volume Up
-  myDFPlayer.volumeDown(); //Volume Down  
+  mp3player.sleep();     //sleep
+  mp3player.enableDAC();  //Enable On-chip DAC
+  mp3player.disableDAC();  //Disable On-chip DAC
+  mp3player.outputSetting(true, 15); //output setting, enable the output and set the gain to 15
+  mp3player.volumeUp(); //Volume Up
+  mp3player.volumeDown(); //Volume Down  
   
   //----Mp3 play----
-  myDFPlayer.next();  //Play next mp3
-  myDFPlayer.previous();  //Play previous mp3
-  myDFPlayer.play(1);  //Play the first mp3
-  myDFPlayer.loop(1);  //Loop the first mp3
-  myDFPlayer.pause();  //pause the mp3
-  myDFPlayer.start();  //start the mp3 from the pause
-  myDFPlayer.playFolder(15, 4);  //play specific mp3 in SD:/15/004.mp3; Folder Name(1~99); File Name(1~255)
-  myDFPlayer.enableLoopAll(); //loop all mp3 files.
-  myDFPlayer.disableLoopAll(); //stop loop all mp3 files.
-  myDFPlayer.playMp3Folder(4); //play specific mp3 in SD:/MP3/0004.mp3; File Name(0~65535)
-  myDFPlayer.advertise(3); //advertise specific mp3 in SD:/ADVERT/0003.mp3; File Name(0~65535)
-  myDFPlayer.stopAdvertise(); //stop advertise
-  myDFPlayer.playLargeFolder(2, 999); //play specific mp3 in SD:/02/004.mp3; Folder Name(1~10); File Name(1~1000)
-  myDFPlayer.loopFolder(5); //loop all mp3 files in folder SD:/05.
-  myDFPlayer.randomAll(); //Random play all the mp3.
-  myDFPlayer.enableLoop(); //enable loop.
-  myDFPlayer.disableLoop(); //disable loop.
+  mp3player.next();  //Play next mp3
+  mp3player.previous();  //Play previous mp3
+  mp3player.play(1);  //Play the first mp3
+  mp3player.loop(1);  //Loop the first mp3
+  mp3player.pause();  //pause the mp3
+  mp3player.start();  //start the mp3 from the pause
+  mp3player.playFolder(15, 4);  //play specific mp3 in SD:/15/004.mp3; Folder Name(1~99); File Name(1~255)
+  mp3player.enableLoopAll(); //loop all mp3 files.
+  mp3player.disableLoopAll(); //stop loop all mp3 files.
+  mp3player.playMp3Folder(4); //play specific mp3 in SD:/MP3/0004.mp3; File Name(0~65535)
+  mp3player.advertise(3); //advertise specific mp3 in SD:/ADVERT/0003.mp3; File Name(0~65535)
+  mp3player.stopAdvertise(); //stop advertise
+  mp3player.playLargeFolder(2, 999); //play specific mp3 in SD:/02/004.mp3; Folder Name(1~10); File Name(1~1000)
+  mp3player.loopFolder(5); //loop all mp3 files in folder SD:/05.
+  mp3player.randomAll(); //Random play all the mp3.
+  mp3player.enableLoop(); //enable loop.
+  mp3player.disableLoop(); //disable loop.
 
     static unsigned long timer = millis();
   
     monitor.setCursor(50,40);
-    monitor.println(myDFPlayer.readCurrentFileNumber());
+    monitor.println(mp3player.readCurrentFileNumber());
     
-    if (myDFPlayer.readType() == DFPlayerPlayFinished) {
-      myDFPlayer.next();  //Play next mp3 every 3 second.
+    if (mp3player.readType() == DFPlayerPlayFinished) {
+      mp3player.next();  //Play next mp3 every 3 second.
     }
     if (millis() - timer > 30000) {
       timer = millis();
       Serial.println("Tocando ... ");
-      Serial.print("No. Arq Corrente "); Serial.println(myDFPlayer.readCurrentFileNumber()); //read current play file number
-      myDFPlayer.next();  //Play next mp3 every 3 second.
+      Serial.print("No. Arq Corrente "); Serial.println(mp3player.readCurrentFileNumber()); //read current play file number
+      mp3player.next();  //Play next mp3 every 3 second.
     }
 */
   
 #ifdef DEBUG  
-  Serial.print("Estado do MP3      "); Serial.println(myDFPlayer.readState()); //read mp3 state
-  Serial.print("Volume             "); Serial.println(myDFPlayer.readVolume()); //read current volume
-  Serial.print("Equalizador        "); Serial.println(myDFPlayer.readEQ()); //read EQ setting
-  Serial.print("Qtde Arquivos      "); Serial.println(myDFPlayer.readFileCounts()); //read all file counts in SD card
-  Serial.print("No. Arq Corrente   "); Serial.println(myDFPlayer.readCurrentFileNumber()); //read current play file number
-  Serial.print("Qtde Arq Pasta MP3 "); Serial.println(myDFPlayer.readFileCountsInFolder(0)); //read fill counts in folder SD:/03
+  Serial.print("Estado do MP3      "); Serial.println(mp3player.readState()); 			// read mp3 state
+  Serial.print("Volume             "); Serial.println(mp3player.readVolume()); 			// read current volume
+  Serial.print("Equalizador        "); Serial.println(mp3player.readEQ()); 			// read EQ setting
+  Serial.print("Qtde Arquivos      "); Serial.println(mp3player.readFileCounts()); 		// read all file counts in SD card
+  Serial.print("No. Arq Corrente   "); Serial.println(mp3player.readCurrentFileNumber()); 	// read current play file number
+  Serial.print("Qtde Arq Pasta MP3 "); Serial.println(mp3player.readFileCountsInFolder(0)); 	// read fill counts in folder SD:/03
 #endif
 
   monitor.setTextColor(WHITE,BLACK);  
@@ -106,8 +106,8 @@ void executaMp3()
   while (!digitalRead(btnModoPin))
   {
     
-    encoderVol.tick();                                             // Verifica o encoder do Volume
-    int newPosVol = encoderVol.getPosition() * ROTARYSTEPS;        // captura a posição fisica atual e calcula a posição lógica
+    encoderVol.tick();                                          // Verifica o encoder do Volume
+    int newPosVol = encoderVol.getPosition() * ROTARYSTEPS;     // captura a posicao fisica atual e calcula a posicao logica
     if (newPosVol < ROTARYMIN) {
       encoderVol.setPosition(ROTARYMIN / ROTARYSTEPS);
       newPosVol = ROTARYMIN;
@@ -121,19 +121,18 @@ void executaMp3()
       Serial.println(newPosVol);
 #endif    
       lastPosVol = newPosVol;
-      myDFPlayer.volume(lastPosVol);
+      mp3player.volume(lastPosVol);
       mostraVolumeMP3();    
     } 
   
-    mostraEQMP3();                                                 // Mostra a equalização do som
-    
-    
-    if (myDFPlayer.available()) {
-      printDetail(myDFPlayer.readType(), myDFPlayer.read());       // Imprime a mensagem detalhada do DFPlayer para verificar com diferentes erros e/ou estados.
+    mostraEQMP3();                                              // Mostra a equalizacao do som
+        
+    if (mp3player.available()) {
+      printDetail(mp3player.readType(), mp3player.read());      // Imprime a mensagem detalhada do DFPlayer para verificar com diferentes erros e/ou estados.
     }
     
   }
-  myDFPlayer.stop();     //Reset the module
+  mp3player.stop();    						// Reset the module
 }
 ////////////////////////////////////////////////////////////////
 void mostraEQMP3()
@@ -141,22 +140,22 @@ void mostraEQMP3()
   String                    DESC_EQ[]         = {"Normal ", "Pop    ", "Rock   ", "Jazz   ", "Classic", "Bass   "};
 
 #ifdef DEBUG
-  Serial.print(" Equalizacao  : ");Serial.println(myDFPlayer.readEQ());
+  Serial.print(" Equalizacao  : ");Serial.println(mp3player.readEQ());
 #endif
 
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(1);
 
-  imprimeTexto(DESC_EQ[myDFPlayer.readEQ()],"D",60);
+  imprimeTexto(DESC_EQ[mp3player.readEQ()],"D",60);
 }
 ////////////////////////////////////////////////////////////////
 void mostraVolumeMP3()
 {
   int16_t vlinMax = monitor.height();
 #ifdef DEBUG
-  Serial.print(" Volume  : ");Serial.println(myDFPlayer.readVolume());
+  Serial.print(" Volume  : ");Serial.println(mp3player.readVolume());
 #endif
-  mostraTermometro("Vol", myDFPlayer.readVolume(), 30, 28, 10, vlinMax-43, 20 );
+  mostraTermometro("Vol", mp3player.readVolume(), 30, 28, 10, vlinMax-43, 20 );
 }
 //////////////////////////////////
 // Apresenta detalhes do Player //
@@ -179,11 +178,11 @@ void printDetail(uint8_t type, int value){
       break;
     case DFPlayerCardRemoved:
       Serial.println(F("Card Removed!"));
-      imprimeTexto("Cartão Removido!","C",80);
+      imprimeTexto("Cartao Removido!","C",80);
       break;
     case DFPlayerCardOnline:
       Serial.println(F("Card Online!"));
-      imprimeTexto("Cartão OnLine!","C",80);
+      imprimeTexto("Cartao OnLine!","C",80);
       break;
     case DFPlayerPlayFinished:
       Serial.print(F("Number:"));
@@ -195,7 +194,7 @@ void printDetail(uint8_t type, int value){
       switch (value) {
         case Busy:
           Serial.println(F("Card not found"));
-          imprimeTexto("DFPlayer Erro: Cartão não encontrado...","C",80);
+          imprimeTexto("DFPlayer Erro: Cartao nao encontrado...","C",80);
           break;
         case Sleeping:
           Serial.println(F("Sleeping"));
@@ -211,11 +210,11 @@ void printDetail(uint8_t type, int value){
           break;
         case FileIndexOut:
           Serial.println(F("File Index Out of Bound"));
-          imprimeTexto("DFPlayer Erro: Indice do Arquivo não encontrado...","C",80);
+          imprimeTexto("DFPlayer Erro: Indice do Arquivo nao encontrado...","C",80);
           break;
         case FileMismatch:
           Serial.println(F("Cannot Find File"));
-          imprimeTexto("DFPlayer Erro: Arquivo não encontrado...","C",80);
+          imprimeTexto("DFPlayer Erro: Arquivo nao encontrado...","C",80);
           break;
         case Advertise:
           Serial.println(F("In Advertise"));

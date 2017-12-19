@@ -64,6 +64,6 @@ void executaSetup()
   }
   relogio.adjust(DateTime(_campos[2][1], _campos[1][1], _campos[0][1], _campos[3][1], _campos[4][1], 0));
   mostra_relogio();
-  vg_modo = 2;                       // Volta para o Radio
+  btnModoState = 2;                       				// Volta para o Radio
 }
 
