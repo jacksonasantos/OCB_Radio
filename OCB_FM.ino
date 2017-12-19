@@ -6,6 +6,7 @@ void executaFM()
   unsigned long             _now           = millis();
   unsigned long             _nextFreqTime  = 1;
   int                       lastPosVol     = -1;
+  int                       lastPosFrq     = -1;
 
   #define                   ROTARYSTEPS        1
   #define                   ROTARYMIN          0
@@ -16,12 +17,10 @@ void executaFM()
   while (!digitalRead(btnModoPin))
   {
     _now = millis();
-  
-    btnModoState = digitalRead(btnModoPin);
-   
-    encoderVol.tick();                                        // Verifica o encoder do Volume
+     
+    encoderVol.tick();                                        	// Verifica o encoder do Volume
 
-    int newPosVol = encoderVol.getPosition() * ROTARYSTEPS;   // captura a posição fisica atual e calcula a posição lógica
+    int newPosVol = encoderVol.getPosition() * ROTARYSTEPS;   	// captura a posicao fisica atual e calcula a posicao logica
 
     if (newPosVol < ROTARYMIN) {
       encoderVol.setPosition(ROTARYMIN / ROTARYSTEPS);
@@ -41,7 +40,7 @@ void executaFM()
       mostraVolume();    
     } 
 
-    encoderFrq.tick();
+    encoderFrq.tick();						// Verifica o encoder a nudan�a de frequencia
     int newPosFrq = encoderFrq.getPosition() * radio.getFrequencyStep();
 
     if (newPosFrq < radio.getMinFrequency()) {
@@ -62,16 +61,14 @@ void executaFM()
       mostraFrequencia(100); 
     } 
 
-    btnMuteState = digitalRead(btnMutePin);                   // Faz a Leitura do Botões
+    btnMuteState = digitalRead(btnMutePin);                   // Faz a Leitura do Botoes
 
     if (btnMuteState == LOW) {              
       radio.setMute(!radio.getMute());
       delay(500);
     }
-//    else if (btnModoState == HIGH){
-//      radio.setBassBoost(!radio.getBassBoost());
-//    }
-    else if (_now > _nextFreqTime )     // Atualiza tela do radio
+
+    else if (_now > _nextFreqTime )                           // Atualiza tela do radio
     { 
       mostra_relogio();
 
@@ -88,7 +85,7 @@ void executaFM()
       imprimeTexto((radioInfo.tuned     ? "TUNED " : "      "),"D",85);
       imprimeTexto((radioInfo.stereo    ? "STEREO" : "MONO  "),"D",100);
       monitor.setTextSize(2);
-      mostraSinal( 60, 120, 40, 2);     // usar 3o parametro com valor PAR | 4o param (1)=Triangulo (2)=Radar
+      mostraSinal( 60, 120, 40, 2);                           // usar 3o parametro com valor PAR | 4o param (1)=Triangulo (2)=Radar
       mostraFrequencia(100);
       mostraRDS(); 
       mostraVolume();    
@@ -119,13 +116,13 @@ void mostraFrequencia(int16_t _lin)
 {
   int16_t vlinMax = monitor.height();
   char s[12];
-  radio.formatFrequency(s, sizeof(s));               // Formata a frequencia sintonizada
+  radio.formatFrequency(s, sizeof(s));                        // Formata a frequencia sintonizada
   radio.clearRDS();
 
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(3);
-  imprimeTexto(s,"C",_lin);                            // Mostra a frequencia sintonizada em numeros formatada
-  if ( radioInfo.tuned )                              // Mostra simbolo de radio sintonizado - bolinha verde
+  imprimeTexto(s,"C",_lin);                                   // Mostra a frequencia sintonizada em numeros formatada
+  if ( radioInfo.tuned )                                      // Mostra simbolo de radio sintonizado - bolinha verde
      monitor.fillCircle(75, _lin, 5, GREEN);
      
   if (v_colAnte> 0) {
@@ -134,7 +131,7 @@ void mostraFrequencia(int16_t _lin)
   }
   
   int _x = 10;
-  int _tam = 10;                                      // Mostra barra de frequencia
+  int _tam = 10;                                              // Mostra barra de frequencia
   for (int i=0; i<(_tam*21); i+=_tam)
   { 
     if (i%25 == 0) _x=20; else _x=10;
@@ -191,4 +188,3 @@ else {
     }
   }
 }
-

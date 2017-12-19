@@ -1,4 +1,5 @@
-// Programa : Rádio
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+// Programa : Radio FM e MP3 Player
 // Autor    : Jackson Alessandro dos Santos
 // Data     : 15/09/2017
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -9,27 +10,25 @@
 #include <RTClib.h>                                             // Driver Relogio - Tiny RTC I2C
 #include <Adafruit_GFX.h>                                       // Biblioteca Grafica Principal
 #include <Adafruit_TFTLCD.h>                                    // Hardware-specific library
-#include <SPI.h>                                                // Habilita a comunicação com devices que usam o barramento SPI - Serial Peripheral Interface
+#include <SPI.h>                                                // Habilita a comunicaa�ao com devices que usam o barramento SPI - Serial Peripheral Interface
 #include <radio.h>                                              // Radio FM
 #include <si4703.h>                                             // Controlar o chip do Radio
 #include <RDSParser.h>                                          // Controlar o conteudo do RDS
-#include <RotaryEncoder.h>                                      // Controlar os Encoder´s
+#include <RotaryEncoder.h>                                      // Controlar os Encoder�s
 #include <DFRobotDFPlayerMini.h>                                // Controlar SD Mini Player
 #include <SoftwareSerial.h>                                     // Controlar a Serial por Software
 
-int                       vg_modo        = 2;                   // Variavel Global de modo de operacao (1-Setup/2-Radio FM/3-MP3)
+int                       btnModoState   = 2;                   // Variavel Global de modo de operacao (1-Setup/2-Radio FM/3-MP3)
+int                       btnMuteState   = 0;
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD
 float                     v_colAnte      = 0;           
-int                       btnMuteState   = 0;
-int                       btnModoState   = 0;
-int                       lastPosFrq     = -1;
 
 String                    BAND[]         = {"FM", "FM Mundo", "AM", "KW"};
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis
-const int                 btnMutePin     = 8;                      // 8              - PWM - Botão Mute
-const int                 btnModoPin     = 9;                      // 9              - PWM - Botão Modo
+const int                 btnMutePin     = 8;                      // 8              - PWM - Botao Mute
+const int                 btnModoPin     = 9;                      // 9              - PWM - Botao Modo
                                                                    // 22-29          - Digital - TFT LCD - D0-D7
                                                                 // Definicao Objetos
 RTC_DS3231                relogio;                                 // I2C(SCL1/SDA1) - Digital     - Modulo RTC          ligado as portas I2C                   
@@ -38,9 +37,9 @@ Adafruit_TFTLCD           monitor(40, 38, 39, 42, 41);             // 38-42     
 RotaryEncoder             encoderVol(A6, A7);                      // A6-A7          - Analogica   - Rotary-Encoder Volume
 RotaryEncoder             encoderFrq(A2, A3);                      // A2-A3          - Analogica   - Rotary-Encoder Frequencia
 RotaryEncoder             encoderVlr(A2, A3);                      //                - copia       - Rotary-Encoder usando no Setup
-SoftwareSerial            mySoftwareSerial(10, 11);                // 10-11          - Digital     - Módulo MP3 - RX, TX
+SoftwareSerial            mySoftwareSerial(10, 11);                // 10-11          - Digital     - Modulo MP3 - RX, TX
 
-DFRobotDFPlayerMini       myDFPlayer;                        // Objeto de controle do Mp3
+DFRobotDFPlayerMini       mp3player;                         // Objeto de controle do Mp3
 RDSParser                 rds;                               // Objeto de controle do Radio - Informacoes RDS
 AUDIO_INFO                audioInfo;                         // Objeto de controle do Radio - Informacoes Audio
 RADIO_INFO                radioInfo;                         // Objeto de controle do Radio - Informacoes Radio
@@ -76,20 +75,20 @@ RADIO_INFO                radioInfo;                         // Objeto de contro
 void setup() 
 {  
 #ifdef DEBUG  
-  Serial.begin(9600);                                    // Inicializa Serial
+  Serial.begin(9600);                                           // Inicializa Serial
 #endif
 
-  pinMode(btnMutePin,INPUT);                             // Configura os Botoes de Controle do Radio
+  pinMode(btnMutePin,INPUT);                                    // Configura os Botoes de Controle do Radio
   pinMode(btnModoPin,INPUT);
 
-  iniciaTFT();                                           // Inicializa o Monitor
+  iniciaTFT();                                                   // Inicializa o Monitor
 
-//  telaIntroducao();                                    // Apresenta Abertura
+//  telaIntroducao();                                           // Apresenta Abertura
   preparaTFT();
   limpaArea();
 
 #ifdef DEBUG
-  Serial.print("Inicializando Relógio... ");             // Inicializa o Relogio
+  Serial.print("Inicializando Relogio... ");                    // Inicializa o Relogio
 #endif  
   if (!relogio.begin()) {
 #ifdef DEBUG 
@@ -107,9 +106,9 @@ void setup()
 #ifdef DEBUG
   Serial.print("Inicializando MP3 Player... ");
 #endif  
-  if (!iniciaMP3())                                      // Inicializa o MP3 Player (Mini SD)
+  if (!iniciaMP3())                                             // Inicializa o MP3 Player (Mini SD)
 #ifdef DEBUG
-     Serial.println("Falha");
+     Serial.println("Falhou!");
 #endif  
   else
 #ifdef DEBUG
@@ -119,80 +118,54 @@ void setup()
 #ifdef DEBUG
   Serial.println("Inicializando Radio... ");
 #endif  
-  radio.init();                                          // Inicializa o Radio 
+  radio.init();                                                 // Inicializa o Radio 
 #ifdef DEBUG
-  radio.debugEnable();                                   // Habilita informacoes de debug do radio para a porta Serial
+  radio.debugEnable();                                          // Habilita informacoes de debug do radio para a porta Serial
 #endif  
-  radio.setBand(FIX_BAND);                               // Define configuracoes de Banda inicial do radio
-  radio.setFrequency(FIX_STATION);                       // Define configuracoes de Frequencia inicial do radio
-  radio.setVolume(FIX_VOLUME);                           // Define configuracoes de Volume inicial do radio
+  radio.setBand(FIX_BAND);                                      // Define configuracoes de Banda inicial do radio
+  radio.setFrequency(FIX_STATION);                              // Define configuracoes de Frequencia inicial do radio
+  radio.setVolume(FIX_VOLUME);                                  // Define configuracoes de Volume inicial do radio
   radio.setBassBoost(false);
   radio.setMono(false);
   radio.setMute(false);
   radio.setSoftMute(false);
-  radio.attachReceiveRDS(RDS_process);                   // setup the information chain for RDS data.
+  radio.attachReceiveRDS(RDS_process);                          // setup the information chain for RDS data.
   rds.attachServicenNameCallback(DisplayServiceName);
 #ifdef DEBUG
   radio.debugRadioInfo();
   radio.debugAudioInfo();
-  //radio.debugStatus();
-#endif
-#ifdef DEBUG
+  
   Serial.println("Radio OK!");
 #endif  
 
   encoderFrq.setPosition(FIX_STATION / radio.getFrequencyStep());  
-
-  mostraTituloModo();                                    // Atualiza Titulo do Botao de MODO
-
 } 
-
-////////////////
-// Click Modo //
-////////////////
-void mostraTituloModo()
-{
-#ifdef DEBUG
-  Serial.print("MODO: ");
-  Serial.println(vg_modo);
-#endif  
-
-  monitor.setTextSize(2);
-  monitor.setTextColor(WHITE, BLUE);
-  monitor.setCursor(10, 5);
-  switch(vg_modo)
-  {
-    case 1:
-      monitor.println("Setup  ");
-      break;
-    case 2:
-      monitor.println("Radio  ");
-      break;
-    case 3:
-      monitor.println("MP3    ");
-      break;
-  }
-  monitor.setTextColor(WHITE);
-}
 
 //////////
 // Loop //
 //////////
 void loop() 
 { 
-  if (digitalRead(btnModoPin) == 1) {            // Leitura do Botao de MODO
-    vg_modo++;
-    if (vg_modo > 3) {vg_modo = 1;}
-    delay(50);
-    mostraTituloModo();                          // Atualiza Titulo do Botao de MODO
+  if (digitalRead(btnModoPin)) {                                // Leitura do Botao de MODO
+     btnModoState++;
+     if (btnModoState > 3) {btnModoState = 1;}
+     delay(50);
+#ifdef DEBUG
+     Serial.print("MODO: "); Serial.println(btnModoState);
+#endif  
   }      
   
-  if (vg_modo == 1)                              // Executa o modo Setup
-     { executaSetup(); }                         
-  else if(vg_modo == 2)                          // Executa o modo Radio FM
-     { executaFM(); }
-  else if(vg_modo == 3)                          // Executa o modo MP3
-     { executaMp3(); }
-  
+  monitor.setTextSize(2);
+  monitor.setTextColor(WHITE, BLUE);
+  if (btnModoState == 1)                                        // Executa o modo Setup
+     { imprimeTexto("Setup","E",5);
+       executaSetup(); }
+  else if(btnModoState == 2)                                    // Executa o modo Radio FM
+     { imprimeTexto("Radio","E",5);
+       executaFM(); }
+  else if(btnModoState == 3)                                    // Executa o modo MP3
+     { imprimeTexto("MP3  ","E",5);
+       executaMp3(); }
+
   limpaArea();
 } 
