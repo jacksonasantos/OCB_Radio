@@ -19,8 +19,6 @@ void executaFM()
   {
     _now = millis();
   
-    btnModoState = digitalRead(btnModoPin);
-   
     encoderVol.tick();                                        // Verifica o encoder do Volume
 
     int newPosVol = encoderVol.getPosition() * ROTARYSTEPS;   // captura a posição fisica atual e calcula a posição lógica
@@ -65,18 +63,24 @@ void executaFM()
     } 
 
     btnMuteState = digitalRead(btnMutePin);                   // Faz a Leitura do Botões
-
+    btnPrevState = digitalRead(btnPrevPin);
+    btnNextState = digitalRead(btnNextPin);
+    
     if (btnMuteState == LOW) {              
       radio.setMute(!radio.getMute());
       delay(500);
     }
-//    else if (btnModoState == HIGH){
-//      radio.setBassBoost(!radio.getBassBoost());
-//    }
-    else if (_now > _nextFreqTime )     // Atualiza tela do radio
+    else if (btnPrevState == HIGH){
+      radio.seekDown(true);
+      encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
+    }
+    else if (btnNextState == HIGH){
+      radio.seekUp(true);
+      encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
+    }
+    else if (_now > _nextFreqTime )                                             // Atualiza tela do radio
     { 
       mostra_relogio();
-
       radio.checkRDS();
       radio.getRadioInfo(&radioInfo);
       radio.getAudioInfo(&audioInfo);
