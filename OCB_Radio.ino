@@ -27,6 +27,9 @@ int                       btnModoState   = 2;                   // Variavel Glob
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis
+const int                 vg_PlayPin     = 3;                      // 3              - PWM         - Controle de status do Play do MP3 (BUSY)
+const int                 vg_Rele1Pin    = 4;                      // 4              - PWM         - Controle de status do Rele1 para som do Radio
+const int                 vg_Rele2Pin    = 5;                      // 5              - PWM         - Controle de status do Rele2 para som do MP3
 const int                 btnPrevPin     = 6;                      // 6              - PWM         - Botão Prev
 const int                 btnNextPin     = 7;                      // 7              - PWM         - Botão Next
 const int                 btnMutePin     = 8;                      // 8              - PWM         - Botão Mute
@@ -37,6 +40,7 @@ RTC_DS3231                relogio;                                 // I2C(SCL1/S
 SI4703                    radio;                                   // I2C(SCL/SDA)   - Digital     - Modulo SI4703       ligado as portas (20 e 21) I2C do Mega 
 Adafruit_TFTLCD           monitor(40, 38, 39, 42, 41);             // 38-42          - Digital     - Modulo LCD - Controle
 RotaryEncoder             encoderVol(A6, A7);                      // A6-A7          - Analogica   - Rotary-Encoder Volume
+RotaryEncoder             encoderVolMP3(A6, A7);                   // A6-A7          - Analogica   - Rotary-Encoder Volume
 RotaryEncoder             encoderFrq(A2, A3);                      // A2-A3          - Analogica   - Rotary-Encoder Frequencia
 RotaryEncoder             encoderVlr(A2, A3);                      //                - copia       - Rotary-Encoder usando no Setup
 SoftwareSerial            mySoftwareSerial(10, 11);                // 10-11          - Digital     - Módulo MP3 - RX, TX
@@ -84,6 +88,8 @@ void setup()
   pinMode(btnNextPin,INPUT);                             
   pinMode(btnMutePin,INPUT);                             
   pinMode(btnModoPin,INPUT);
+  pinMode(vg_Rele1Pin,OUTPUT);
+  pinMode(vg_Rele2Pin,OUTPUT);
 
   iniciaTFT();                                           // Inicializa o Monitor
 
@@ -159,23 +165,32 @@ void loop()
     Serial.print("MODO: ");   Serial.println(btnModoState);
 #endif  
   }      
-  
+
+if( btnModoState == 1 || btnModoState == 2 ) {
+  digitalWrite(vg_Rele1Pin, LOW); 
+  digitalWrite(vg_Rele2Pin, LOW); 
+}
+else {  
+  digitalWrite(vg_Rele1Pin, HIGH); 
+  digitalWrite(vg_Rele2Pin, HIGH); 
+}
+
   monitor.setTextSize(2);
   monitor.setTextColor(WHITE, BLUE);
   if (btnModoState == 1)                              // Executa o modo Setup
-     { imprimeTexto("Setup  ","E",5);
+     { imprimeTexto("Setup","E",5);
        executaSetup(); }                         
   else if(btnModoState == 2)                          // Executa o modo Radio FM
      { radio.setMute(0);
-       imprimeTexto("Radio  ","E",5);
+       imprimeTexto("Radio","E",5);
        executaFM(); }
   else if(btnModoState == 3)                          // Executa o modo MP3 no SD
      { radio.setMute(1);
-       imprimeTexto("SD/MP3 ","E",5);
+       imprimeTexto("SD   ","E",5);
        executaMp3(DFPLAYER_DEVICE_SD); }
   else if(btnModoState == 4)                          // Executa o modo MP3 no USB
      { radio.setMute(1);
-       imprimeTexto("USB/MP3","E",5);
+       imprimeTexto("USB  ","E",5);
        executaMp3(DFPLAYER_DEVICE_U_DISK); }
   
   limpaArea();

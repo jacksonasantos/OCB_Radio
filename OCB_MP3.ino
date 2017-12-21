@@ -9,11 +9,12 @@ bool iniciaMP3(uint8_t device)
   }
   else {
     mp3player.reset();                                  	// Reset o modulo
-    mp3player.setTimeOut(500);                          	// Define o time out (500ms) da comunicacao serial
+    mp3player.setTimeOut(50);                          	// Define o time out (500ms) da comunicacao serial
+   // mp3player.enableDAC();                                //Enable On-chip DAC
     mp3player.volume(FIX_VOLUME);                       	// Define o volume inicial
     mp3player.EQ(DFPLAYER_EQ_NORMAL);                   	// Define a equalizacao do som
-    mp3player.outputSetting(true, 15);                  	// output setting, enable the output and set the gain to 15
     mp3player.outputDevice(device);                       // Configura o tipo de device a usar
+    mp3player.outputSetting(true, 15);                  	// output setting, enable the output and set the gain to 15
     delay(500);
 #ifdef DEBUG  
   Serial.print("    Device             "); Serial.println(device);                                    // dispositivo 1 - USB 2 -SD
@@ -22,7 +23,7 @@ bool iniciaMP3(uint8_t device)
   Serial.print("    Equalizador        "); Serial.println(mp3player.readEQ());                        // read EQ setting
   Serial.print("    Qtde Arquivos      "); Serial.println(mp3player.readFileCounts(device));          // read all file counts in SD card
   Serial.print("    No. Arq Corrente   "); Serial.println(mp3player.readCurrentFileNumber(device));   // read current play file number
-  Serial.print("    Qtde Arq Pasta MP3 "); Serial.println(mp3player.readFileCountsInFolder(0));       // read fill counts in folder SD:/03
+//  Serial.print("    Qtde Arq Pasta MP3 "); Serial.println(mp3player.readFileCountsInFolder(device));  // read fill counts in folder SD:/03
 #endif
 
   return 1;
@@ -56,7 +57,7 @@ void executaMp3(uint8_t device)
   #define                   ROTARYMIN          0
   #define                   ROTARYMAX          30
   
-  encoderVol.setPosition(FIX_VOLUME / ROTARYSTEPS);
+  encoderVolMP3.setPosition(FIX_VOLUME / ROTARYSTEPS);
 
 /*  
   //----Mp3 control----
@@ -85,49 +86,32 @@ void executaMp3(uint8_t device)
   mp3player.randomAll(); //Random play all the mp3.
   mp3player.enableLoop(); //enable loop.
   mp3player.disableLoop(); //disable loop.
-
-    static unsigned long timer = millis();
   
-    monitor.setCursor(50,40);
-    monitor.println(mp3player.readCurrentFileNumber());
-    
     if (mp3player.readType() == DFPlayerPlayFinished) {
       mp3player.next();  //Play next mp3 every 3 second.
-    }
-    if (millis() - timer > 30000) {
-      timer = millis();
-      Serial.println("Tocando ... ");
-      Serial.print("No. Arq Corrente "); Serial.println(mp3player.readCurrentFileNumber()); //read current play file number
-      mp3player.next();  //Play next mp3 every 3 second.
-    }
-*/
-  
-#ifdef DEBUG  
-  Serial.print("Device             "); Serial.println(device);                                    // dispositivo 1 - USB 2 -SD
-  Serial.print("Estado             "); Serial.println(mp3player.readState());                     // read mp3 state
-  Serial.print("Volume             "); Serial.println(mp3player.readVolume()); 		              	// read current volume
-  Serial.print("Equalizador        "); Serial.println(mp3player.readEQ()); 			                  // read EQ setting
-  Serial.print("Qtde Arquivos      "); Serial.println(mp3player.readFileCounts(device)); 		      // read all file counts in SD card
-  Serial.print("No. Arq Corrente   "); Serial.println(mp3player.readCurrentFileNumber(device)); 	// read current play file number
-  Serial.print("Qtde Arq Pasta MP3 "); Serial.println(mp3player.readFileCountsInFolder(0)); 	    // read fill counts in folder SD:/03
-#endif
 
+*/
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(2);
 
   while ( !digitalRead(btnModoPin) )
   {
+    boolean play_state = digitalRead(vg_PlayPin);// connect Pin3 to BUSY pin of player 
+    if (play_state == HIGH ){
+      mp3player.play();
+    }
     
-    encoderVol.tick();                                          // Verifica o encoder do Volume
+    encoderVolMP3.tick();                                          // Verifica o encoder do Volume
     
-    int newPosVol = encoderVol.getPosition() * ROTARYSTEPS;     // captura a posicao fisica atual e calcula a posicao logica
+    int newPosVol = encoderVolMP3.getPosition() * ROTARYSTEPS;     // captura a posicao fisica atual e calcula a posicao logica
     if (newPosVol < ROTARYMIN) {
-      encoderVol.setPosition(ROTARYMIN / ROTARYSTEPS);
+      encoderVolMP3.setPosition(ROTARYMIN / ROTARYSTEPS);
       newPosVol = ROTARYMIN;
     } else if (newPosVol > ROTARYMAX) {
-      encoderVol.setPosition(ROTARYMAX / ROTARYSTEPS);
+      encoderVolMP3.setPosition(ROTARYMAX / ROTARYSTEPS);
       newPosVol = ROTARYMAX;
     } 
+    Serial.print("Rotary Volume : ");Serial.println(newPosVol);
     if (lastPosVol != newPosVol) {
 #ifdef DEBUG
       Serial.print("Rotary Volume : ");Serial.println(newPosVol);
@@ -142,12 +126,15 @@ void executaMp3(uint8_t device)
     btnNextState = digitalRead(btnNextPin);
     
     if (btnMuteState == LOW) {                              // Faz a Leitura do Botão MUTE        
+
+      imprimeTexto( String(mp3player.readState()),"C", 150);
+          
       if ( mp3player.readState() == 513 ) {
         mp3player.pause();
         monitor.setTextColor(YELLOW,BLACK);  
         monitor.setTextSize(2);
         imprimeTexto("PAUSE","C",50);
-        delay(500);
+        delay(5);
 #ifdef DEBUG
         Serial.println("PAUSE");
 #endif
@@ -157,7 +144,7 @@ void executaMp3(uint8_t device)
          monitor.setTextColor(WHITE,BLACK);  
          monitor.setTextSize(2);
          imprimeTexto("     ","C",50);
-         delay(500);          
+         delay(5);          
 #ifdef DEBUG
          Serial.println("START");
 #endif
@@ -180,7 +167,7 @@ void executaMp3(uint8_t device)
     mostraEQMP3();                                                  // Mostra a equalizacao do som
         
     if (mp3player.available()) {
-      printDetail(mp3player.readType(), mp3player.read(),monitor.height()-25);            // Imprime a mensagem detalhada do DFPlayer para verificar com diferentes erros e/ou estados.
+      printDetail(mp3player.readType(), mp3player.read(),monitor.height()-20);            // Imprime a mensagem detalhada do DFPlayer para verificar com diferentes erros e/ou estados.
     }
     
   }
@@ -210,28 +197,28 @@ void mostraVolumeMP3()
 //////////////////////////////////
 void printDetail(uint8_t type, int value, int vposmsg ){
   
-  monitor.setTextColor(WHITE,BLACK);  
+  monitor.setTextColor(WHITE,BLUE);  
   monitor.setTextSize(1);
   switch (type) {
     case TimeOut:
       Serial.println(F("Time Out!"));
-      imprimeTexto("Tempo Esgotado!","EC",vposmsg);
+      imprimeTexto("Tempo Esgotado!","C",vposmsg);
       break;
     case WrongStack:
       Serial.println(F("Stack Wrong!"));
-      imprimeTexto("Erro de Empilhamento!","E",vposmsg);
+      imprimeTexto("Erro de Empilhamento!","C",vposmsg);
       break;
     case DFPlayerCardInserted:
       Serial.println(F("Card Inserted!"));
-      imprimeTexto("Cartão Inserido!","E",vposmsg);
+      imprimeTexto("Cartão Inserido!","C",vposmsg);
       break;
     case DFPlayerCardRemoved:
       Serial.println(F("Card Removed!"));
-      imprimeTexto("Cartao Removido!","E",vposmsg);
+      imprimeTexto("Cartao Removido!","C",vposmsg);
       break;
     case DFPlayerCardOnline:
       Serial.println(F("Card Online!"));
-      imprimeTexto("Cartao OnLine!","E",vposmsg);
+      imprimeTexto("Cartao OnLine!","C",vposmsg);
       break;
     case DFPlayerPlayFinished:
       Serial.print(F("Number:"));
@@ -243,31 +230,31 @@ void printDetail(uint8_t type, int value, int vposmsg ){
       switch (value) {
         case Busy:
           Serial.println(F("Card not found"));
-          imprimeTexto("Erro: Cartao nao encontrado...","E",vposmsg);
+          imprimeTexto("Erro: Cartao nao encontrado...","C",vposmsg);
           break;
         case Sleeping:
           Serial.println(F("Sleeping"));
-          imprimeTexto("Erro: Dormindo...","E",vposmsg);
+          imprimeTexto("Erro: Dormindo...","C",vposmsg);
           break;
         case SerialWrongStack:
           Serial.println(F("Get Wrong Stack"));
-          imprimeTexto("Erro: Get Wrong Stack...","E",vposmsg);
+          imprimeTexto("Erro: Get Wrong Stack...","C",vposmsg);
           break;
         case CheckSumNotMatch:
           Serial.println(F("Check Sum Not Match"));
-          imprimeTexto("Erro: Check Sum Not Match...","E",vposmsg);
+          imprimeTexto("Erro: Check Sum Not Match...","C",vposmsg);
           break;
         case FileIndexOut:
           Serial.println(F("File Index Out of Bound"));
-          imprimeTexto("Erro: Indice do Arquivo nao encontrado...","E",vposmsg);
+          imprimeTexto("Erro: Indice do Arquivo nao encontrado...","C",vposmsg);
           break;
         case FileMismatch:
           Serial.println(F("Cannot Find File"));
-          imprimeTexto("Erro: Arquivo nao encontrado...","E",vposmsg);
+          imprimeTexto("Erro: Arquivo nao encontrado...","C",vposmsg);
           break;
         case Advertise:
           Serial.println(F("In Advertise"));
-          imprimeTexto("Erro: Em Anuncio...","E",vposmsg);
+          imprimeTexto("Erro: Em Anuncio...","C",vposmsg);
           break;
         default:
           break;

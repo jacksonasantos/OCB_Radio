@@ -71,11 +71,11 @@ void executaFM()
       delay(500);
     }
     else if (btnPrevState == HIGH){
-      radio.seekDown(true);
+      radio.seekDown(false);
       encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
     }
     else if (btnNextState == HIGH){
-      radio.seekUp(true);
+      radio.seekUp(false);
       encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
     }
     else if (_now > _nextFreqTime )                                             // Atualiza tela do radio
