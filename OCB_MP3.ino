@@ -3,27 +3,28 @@
 /////////////////////
 bool iniciaMP3(uint8_t device)
 {
-  mySoftwareSerial.begin(9600);                         	// Inicializa softwareSerial
-  if (!mp3player.begin(mySoftwareSerial)) {             	// Usa softwareSerial para comunicacar com player
+  Serial1.begin(9600);
+  if (!mp3player.begin(Serial1)) {             	// Usa softwareSerial para comunicacar com player
     return -1;
   }
   else {
     mp3player.reset();                                  	// Reset o modulo
-    mp3player.setTimeOut(50);                          	// Define o time out (500ms) da comunicacao serial
-   // mp3player.enableDAC();                                //Enable On-chip DAC
-    mp3player.volume(FIX_VOLUME);                       	// Define o volume inicial
+    mp3player.setTimeOut(500);                          	// Define o time out (500ms) da comunicacao serial
+    mp3player.enableDAC();                                // Enable On-chip DAC
     mp3player.EQ(DFPLAYER_EQ_NORMAL);                   	// Define a equalizacao do som
     mp3player.outputDevice(device);                       // Configura o tipo de device a usar
     mp3player.outputSetting(true, 15);                  	// output setting, enable the output and set the gain to 15
-    delay(500);
+    mp3player.volume(FIX_VOLUME);                         // Define o volume inicial
+    delay(100);
 #ifdef DEBUG  
-  Serial.print("    Device             "); Serial.println(device);                                    // dispositivo 1 - USB 2 -SD
-  Serial.print("    Estado             "); Serial.println(mp3player.readState());                     // read mp3 state
-  Serial.print("    Volume             "); Serial.println(mp3player.readVolume());                     // read current volume
-  Serial.print("    Equalizador        "); Serial.println(mp3player.readEQ());                        // read EQ setting
-  Serial.print("    Qtde Arquivos      "); Serial.println(mp3player.readFileCounts(device));          // read all file counts in SD card
-  Serial.print("    No. Arq Corrente   "); Serial.println(mp3player.readCurrentFileNumber(device));   // read current play file number
-//  Serial.print("    Qtde Arq Pasta MP3 "); Serial.println(mp3player.readFileCountsInFolder(device));  // read fill counts in folder SD:/03
+  Serial.println(" ");
+  Serial.print  ("    Device             "); Serial.println(device);                                    // dispositivo 1 - USB 2 -SD
+  Serial.print  ("    Estado             "); Serial.println(mp3player.readState());                     // read mp3 state
+  Serial.print  ("    Volume             "); Serial.println(mp3player.readVolume());                    // read current volume
+  Serial.print  ("    Equalizador        "); Serial.println(mp3player.readEQ());                        // read EQ setting
+  Serial.print  ("    Qtde Arquivos      "); Serial.println(mp3player.readFileCounts(device));          // read all file counts in SD card
+  Serial.print  ("    No. Arq Corrente   "); Serial.println(mp3player.readCurrentFileNumber(device));   // read current play file number
+//  Serial.print  ("    Qtde Arq Pasta MP3 "); Serial.println(mp3player.readFileCountsInFolder(device));  // read fill counts in folder SD:/03
 #endif
 
   return 1;
@@ -38,33 +39,31 @@ void executaMp3(uint8_t device)
 
 #ifdef DEBUG
   Serial.print("Inicializando MP3 Player... ");
+  Serial.print(device);
 #endif  
   if (!iniciaMP3(device)){
 #ifdef DEBUG
-     Serial.println("Falhou!");
+     Serial.println(" Falhou!");
 #endif  
      return;
   }
   else {
 #ifdef DEBUG
-      Serial.println("OK!");
+      Serial.println(" OK!");
 #endif  
   }
   
   int                       lastPosVol         = -1;
   
-  #define                   ROTARYSTEPS        1
-  #define                   ROTARYMIN          0
-  #define                   ROTARYMAX          30
+  #define                   ROTARYvolSTEPS     1
+  #define                   ROTARYvolMIN       0
+  #define                   ROTARYvolMAX       30
   
-  encoderVolMP3.setPosition(FIX_VOLUME / ROTARYSTEPS);
+  encoderVolMP3.setPosition(FIX_VOLUME / ROTARYvolSTEPS);
 
 /*  
   //----Mp3 control----
   mp3player.sleep();     //sleep
-  mp3player.enableDAC();  //Enable On-chip DAC
-  mp3player.disableDAC();  //Disable On-chip DAC
-  mp3player.outputSetting(true, 15); //output setting, enable the output and set the gain to 15
   mp3player.volumeUp(); //Volume Up
   mp3player.volumeDown(); //Volume Down  
   
@@ -96,20 +95,20 @@ void executaMp3(uint8_t device)
 
   while ( !digitalRead(btnModoPin) )
   {
-    boolean play_state = digitalRead(vg_PlayPin);// connect Pin3 to BUSY pin of player 
-    if (play_state == HIGH ){
-      mp3player.play();
-    }
+   // boolean play_state = digitalRead(vg_PlayPin);                  // connect Pin3 to BUSY pin of player 
+   // if (play_state == HIGH ){
+   //   mp3player.play();
+   // }
     
-    encoderVolMP3.tick();                                          // Verifica o encoder do Volume
+/*    encoderVolMP3.tick();                                          // Verifica o encoder do Volume
     
-    int newPosVol = encoderVolMP3.getPosition() * ROTARYSTEPS;     // captura a posicao fisica atual e calcula a posicao logica
-    if (newPosVol < ROTARYMIN) {
-      encoderVolMP3.setPosition(ROTARYMIN / ROTARYSTEPS);
-      newPosVol = ROTARYMIN;
-    } else if (newPosVol > ROTARYMAX) {
-      encoderVolMP3.setPosition(ROTARYMAX / ROTARYSTEPS);
-      newPosVol = ROTARYMAX;
+    int newPosVol = encoderVolMP3.getPosition() * ROTARYvolSTEPS;     // captura a posicao fisica atual e calcula a posicao logica
+    if (newPosVol < ROTARYvolMIN) {
+      encoderVolMP3.setPosition(ROTARYvolMIN / ROTARYvolSTEPS);
+      newPosVol = ROTARYvolMIN;
+    } else if (newPosVol > ROTARYvolMAX) {
+      encoderVolMP3.setPosition(ROTARYvolMAX / ROTARYvolSTEPS);
+      newPosVol = ROTARYvolMAX;
     } 
     Serial.print("Rotary Volume : ");Serial.println(newPosVol);
     if (lastPosVol != newPosVol) {
@@ -119,8 +118,8 @@ void executaMp3(uint8_t device)
       lastPosVol = newPosVol;
       mp3player.volume(lastPosVol);
       mostraVolumeMP3();    
-    } 
-
+  } 
+*/
     btnMuteState = digitalRead(btnMutePin);
     btnPrevState = digitalRead(btnPrevPin);
     btnNextState = digitalRead(btnNextPin);
@@ -140,13 +139,13 @@ void executaMp3(uint8_t device)
 #endif
       }
       else {
-         mp3player.start();
-         monitor.setTextColor(WHITE,BLACK);  
-         monitor.setTextSize(2);
-         imprimeTexto("     ","C",50);
-         delay(5);          
+        mp3player.start();
+        monitor.setTextColor(WHITE,BLACK);  
+        monitor.setTextSize(2);
+        imprimeTexto("     ","C",50);
+        delay(5);          
 #ifdef DEBUG
-         Serial.println("START");
+        Serial.println("START");
 #endif
       }
     }
@@ -161,8 +160,8 @@ void executaMp3(uint8_t device)
     
     monitor.setTextColor(WHITE,BLACK);  
     monitor.setTextSize(2);
-    imprimeTexto( String(mp3player.readFileCounts(device)),"C", 70);
-    imprimeTexto( String(mp3player.readCurrentFileNumber(device)),"C", 90);
+    imprimeTexto( String(mp3player.readFileCounts()),"C", 70);
+    imprimeTexto( String(mp3player.readCurrentFileNumber()),"C", 90);
     
     mostraEQMP3();                                                  // Mostra a equalizacao do som
         

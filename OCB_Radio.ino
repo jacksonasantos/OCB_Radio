@@ -16,14 +16,13 @@
 #include <RDSParser.h>                                          // Controlar o conteudo do RDS
 #include <RotaryEncoder.h>                                      // Controlar os Encoder´s
 #include <DFRobotDFPlayerMini.h>                                // Controlar Mini Player MP3 - SD
-#include <SoftwareSerial.h>                                     // Biblioteca de configuração da Serial através de Software
 
-uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD
+uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
 float                     v_colAnte      = 0;           
 int                       btnPrevState   = 0;
 int                       btnNextState   = 0;
 int                       btnMuteState   = 0;
-int                       btnModoState   = 2;                   // Variavel Global de modo de operacao (1-Setup/2-Radio FM/3-MP3)
+int                       btnModoState   = 2;                   // Variavel Global de modo de operacao (1-Setup / 2-Radio FM / 3-SD / 4-USB)
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis
@@ -34,16 +33,16 @@ const int                 btnPrevPin     = 6;                      // 6         
 const int                 btnNextPin     = 7;                      // 7              - PWM         - Botão Next
 const int                 btnMutePin     = 8;                      // 8              - PWM         - Botão Mute
 const int                 btnModoPin     = 9;                      // 9              - PWM         - Botão Modo
-                                                                   // 22-29          - Digital     - TFT LCD - D0-D7
                                                                 // Definicao Objetos
 RTC_DS3231                relogio;                                 // I2C(SCL1/SDA1) - Digital     - Modulo RTC          ligado as portas I2C                   
-SI4703                    radio;                                   // I2C(SCL/SDA)   - Digital     - Modulo SI4703       ligado as portas (20 e 21) I2C do Mega 
+                                                                   // 19-18          - Digital     - Modulo MP3          ligado as portas RX1, TX1 na Serial1
+SI4703                    radio;                                   // 20-21          - Digital     - Modulo SI4703       ligado as portas I2C (SCL/SDA) do Mega 
+                                                                   // 22-29          - Digital     - Modulo TFT LCD - D0-D7
 Adafruit_TFTLCD           monitor(40, 38, 39, 42, 41);             // 38-42          - Digital     - Modulo LCD - Controle
 RotaryEncoder             encoderVol(A6, A7);                      // A6-A7          - Analogica   - Rotary-Encoder Volume
-RotaryEncoder             encoderVolMP3(A6, A7);                   // A6-A7          - Analogica   - Rotary-Encoder Volume
+RotaryEncoder             encoderVolMP3(A6, A7);                   //                - copia       - Rotary-Encoder Volume
 RotaryEncoder             encoderFrq(A2, A3);                      // A2-A3          - Analogica   - Rotary-Encoder Frequencia
 RotaryEncoder             encoderVlr(A2, A3);                      //                - copia       - Rotary-Encoder usando no Setup
-SoftwareSerial            mySoftwareSerial(10, 11);                // 10-11          - Digital     - Módulo MP3 - RX, TX
 
 DFRobotDFPlayerMini       mp3player;                         // Objeto de controle do Mp3
 RDSParser                 rds;                               // Objeto de controle do Radio - Informacoes RDS
@@ -81,7 +80,7 @@ RADIO_INFO                radioInfo;                         // Objeto de contro
 void setup() 
 {  
 #ifdef DEBUG  
-  Serial.begin(9600);                                    // Inicializa Serial
+  Serial.begin(115200);                                    // Inicializa Serial
 #endif
 
   pinMode(btnPrevPin,INPUT);                             // Configura os Botoes de Controle do Radio
