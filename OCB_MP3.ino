@@ -15,7 +15,7 @@ bool iniciaMP3(uint8_t device)
     mp3player.outputDevice(device);                       // Configura o tipo de device a usar
     mp3player.outputSetting(true, 15);                  	// output setting, enable the output and set the gain to 15
     mp3player.volume(FIX_VOLUME);                         // Define o volume inicial
-    delay(100);
+    delay(300);
 #ifdef DEBUG  
   Serial.println(" ");
   Serial.print  ("    Device             "); Serial.println(device);                                    // dispositivo 1 - USB 2 -SD
@@ -53,7 +53,7 @@ void executaMp3(uint8_t device)
 #endif  
   }
   
-  int                       lastPosVol         = -1;
+  int                       _lastPosVol        = -1;
   
   #define                   ROTARYvolSTEPS     1
   #define                   ROTARYvolMIN       0
@@ -100,7 +100,7 @@ void executaMp3(uint8_t device)
    //   mp3player.play();
    // }
     
-/*    encoderVolMP3.tick();                                          // Verifica o encoder do Volume
+    encoderVolMP3.tick();                                          // Verifica o encoder do Volume
     
     int newPosVol = encoderVolMP3.getPosition() * ROTARYvolSTEPS;     // captura a posicao fisica atual e calcula a posicao logica
     if (newPosVol < ROTARYvolMIN) {
@@ -110,25 +110,23 @@ void executaMp3(uint8_t device)
       encoderVolMP3.setPosition(ROTARYvolMAX / ROTARYvolSTEPS);
       newPosVol = ROTARYvolMAX;
     } 
-    Serial.print("Rotary Volume : ");Serial.println(newPosVol);
-    if (lastPosVol != newPosVol) {
+    if (_lastPosVol != newPosVol) {
 #ifdef DEBUG
       Serial.print("Rotary Volume : ");Serial.println(newPosVol);
 #endif    
-      lastPosVol = newPosVol;
-      mp3player.volume(lastPosVol);
+      _lastPosVol = newPosVol;
+      mp3player.volume(_lastPosVol);
       mostraVolumeMP3();    
   } 
-*/
+
     btnMuteState = digitalRead(btnMutePin);
     btnPrevState = digitalRead(btnPrevPin);
     btnNextState = digitalRead(btnNextPin);
     
+//    imprimeTexto( String(mp3player.readState()),"C", 150);
+    
     if (btnMuteState == LOW) {                              // Faz a Leitura do Botão MUTE        
-
-      imprimeTexto( String(mp3player.readState()),"C", 150);
-          
-      if ( mp3player.readState() == 513 ) {
+      if ( mp3player.readState() == 513 ) {                 // Estado 513 - Tocando Musica
         mp3player.pause();
         monitor.setTextColor(YELLOW,BLACK);  
         monitor.setTextSize(2);
@@ -175,21 +173,22 @@ void executaMp3(uint8_t device)
 ////////////////////////////////////////////////////////////////
 void mostraEQMP3()
 {
-  String                    DESC_EQ[]         = {"Normal ", "Pop    ", "Rock   ", "Jazz   ", "Classic", "Bass   "};
+  String       DESC_EQ[]         = {"Normal ", "Pop    ", "Rock   ", "Jazz   ", "Classic", "Bass   "};
 
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(1);
 
   imprimeTexto(DESC_EQ[mp3player.readEQ()],"D",60);
+  monitor.setTextSize(2);
 }
 ////////////////////////////////////////////////////////////////
 void mostraVolumeMP3()
 {
-  int16_t vlinMax = monitor.height();
+  int16_t _linMax = monitor.height();
 #ifdef DEBUG
   Serial.print(" Volume  : ");Serial.println(mp3player.readVolume()/2);
 #endif
-  mostraTermometro("Vol", mp3player.readVolume()/2, 30, 28, 10, vlinMax-43, 20 );
+  mostraTermometro("Vol", mp3player.readVolume()/2, 30, 28, 10, _linMax-43, 20 );
 }
 //////////////////////////////////
 // Apresenta detalhes do Player //

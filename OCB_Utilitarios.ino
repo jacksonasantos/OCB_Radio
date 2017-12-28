@@ -40,10 +40,6 @@ void telaIntroducao()
 ///////////////////////
 void preparaTFT() 
 {  
-#ifdef DEBUG
-  Serial.print("Preparando monitor... ");
-#endif  
-
   // Preenche monitor com Preto
   monitor.fillScreen(BLACK);                      
 
@@ -55,11 +51,7 @@ void preparaTFT()
   monitor.fillRect(0, 28, monitor.width()-1,  5, BLUE);   
 
   // Desenha Rodape
-  monitor.fillRect(0, monitor.height()-25, monitor.width()-1, 25, BLUE);
-  
-#ifdef DEBUG
-  Serial.println("OK!");
-#endif    
+  monitor.fillRect(0, monitor.height()-25, monitor.width()-1, 25, BLUE); 
 } 
 
 ///////////////////

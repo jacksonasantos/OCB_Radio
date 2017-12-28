@@ -13,16 +13,16 @@
 #include <SPI.h>                                                // Habilita a comunicação com devices que usam o barramento SPI - Serial Peripheral Interface
 #include <radio.h>                                              // Radio FM
 #include <si4703.h>                                             // Controlador Radio
-#include <RDSParser.h>                                          // Controlar o conteudo do RDS
+#include <RDSParser.h>                                          // Controlar o conteudo do RDS do radio
 #include <RotaryEncoder.h>                                      // Controlar os Encoder´s
 #include <DFRobotDFPlayerMini.h>                                // Controlar Mini Player MP3 - SD
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
-float                     v_colAnte      = 0;           
 int                       btnPrevState   = 0;
 int                       btnNextState   = 0;
 int                       btnMuteState   = 0;
 int                       btnModoState   = 2;                   // Variavel Global de modo de operacao (1-Setup / 2-Radio FM / 3-SD / 4-USB)
+float                     _colAnte       = 0;  
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis
@@ -37,8 +37,8 @@ const int                 btnModoPin     = 9;                      // 9         
 RTC_DS3231                relogio;                                 // I2C(SCL1/SDA1) - Digital     - Modulo RTC          ligado as portas I2C                   
                                                                    // 19-18          - Digital     - Modulo MP3          ligado as portas RX1, TX1 na Serial1
 SI4703                    radio;                                   // 20-21          - Digital     - Modulo SI4703       ligado as portas I2C (SCL/SDA) do Mega 
-                                                                   // 22-29          - Digital     - Modulo TFT LCD - D0-D7
-Adafruit_TFTLCD           monitor(40, 38, 39, 42, 41);             // 38-42          - Digital     - Modulo LCD - Controle
+                                                                   // 22-29          - Digital     - Modulo TFT LCD      ligado as portas D0-D7
+Adafruit_TFTLCD           monitor(40, 38, 39, 42, 41);             // 38-42          - Digital     - Modulo LCD          ligado as portas de controle RD,WS,RS,CS,RST
 RotaryEncoder             encoderVol(A6, A7);                      // A6-A7          - Analogica   - Rotary-Encoder Volume
 RotaryEncoder             encoderVolMP3(A6, A7);                   //                - copia       - Rotary-Encoder Volume
 RotaryEncoder             encoderFrq(A2, A3);                      // A2-A3          - Analogica   - Rotary-Encoder Frequencia
@@ -54,7 +54,7 @@ RADIO_INFO                radioInfo;                         // Objeto de contro
 #define                   FIX_VOLUME         6               // Define Volume inicial
 
 
-// Define nomes legiveis das Cores dos valores de 16-bit - https://stackoverflow.com/questions/13720937/c-defined-16bit-high-color
+// Definição de nomes legiveis das Cores para valores de 16-bit
 #define BLACK            0x0000      /*   0,   0,   0 */
 #define NAVY             0x000F      /*   0,   0, 128 */
 #define DARKGREEN        0x03E0      /*   0, 128,   0 */
@@ -80,7 +80,7 @@ RADIO_INFO                radioInfo;                         // Objeto de contro
 void setup() 
 {  
 #ifdef DEBUG  
-  Serial.begin(115200);                                    // Inicializa Serial
+  Serial.begin(115200);                                  // Inicializa Serial caso seja configurado para DEBUG
 #endif
 
   pinMode(btnPrevPin,INPUT);                             // Configura os Botoes de Controle do Radio
@@ -91,7 +91,6 @@ void setup()
   pinMode(vg_Rele2Pin,OUTPUT);
 
   iniciaTFT();                                           // Inicializa o Monitor
-
 //  telaIntroducao();                                    // Apresenta Abertura
   preparaTFT();
   limpaArea();
@@ -122,33 +121,8 @@ void setup()
 #ifdef DEBUG
      Serial.println("OK!");
 #endif  
- 
-#ifdef DEBUG
-  Serial.println("Inicializando Radio... ");
-#endif  
-  radio.init();                                          // Inicializa o Radio 
-#ifdef DEBUG
-  radio.debugEnable();                                   // Habilita informacoes de debug do radio para a porta Serial
-#endif  
-  radio.setBand(FIX_BAND);                               // Define configuracoes de Banda inicial do radio
-  radio.setFrequency(FIX_STATION);                       // Define configuracoes de Frequencia inicial do radio
-  radio.setVolume(FIX_VOLUME);                           // Define configuracoes de Volume inicial do radio
-  radio.setBassBoost(false);
-  radio.setMono(false);
-  radio.setMute(false);
-  radio.setSoftMute(false);
-  radio.attachReceiveRDS(RDS_process);                   // setup the information chain for RDS data.
-  rds.attachServicenNameCallback(DisplayServiceName);
-#ifdef DEBUG
-  radio.debugRadioInfo();
-  radio.debugAudioInfo();
-  //radio.debugStatus();
-#endif
-#ifdef DEBUG
-  Serial.println("Radio OK!");
-#endif  
 
-  encoderFrq.setPosition(FIX_STATION / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Default
+  iniciaFM();
 } 
 
 //////////
@@ -165,7 +139,7 @@ void loop()
 #endif  
   }      
 
-if( btnModoState == 1 || btnModoState == 2 ) {
+if( btnModoState == 1 || btnModoState == 2 ) {       // Configura os Rele para direcionarmento da saida dos alto falantes (1 e 2 modos SETUP e FM)
   digitalWrite(vg_Rele1Pin, LOW); 
   digitalWrite(vg_Rele2Pin, LOW); 
 }
@@ -180,8 +154,7 @@ else {
      { imprimeTexto("Setup","E",5);
        executaSetup(); }                         
   else if(btnModoState == 2)                          // Executa o modo Radio FM
-     { radio.setMute(0);
-       imprimeTexto("Radio","E",5);
+     { imprimeTexto("Radio","E",5);
        executaFM(); }
   else if(btnModoState == 3)                          // Executa o modo MP3 no SD
      { radio.setMute(1);

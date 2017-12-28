@@ -3,9 +3,9 @@
 ///////////////////
 void executaSetup()
 {
-  DateTime _datahora = relogio.now();
-  char _daysOfTheWeek[7][12] = {"Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"};
-  int _campos[5][5];
+  DateTime _datahora             = relogio.now();
+  char     _daysOfTheWeek[7][12] = {"Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"};
+  int      _campos[5][5];
   
   // Campo        Valor               Coluna               Linha               limite minimo      limite maximo
   _campos[0][1] = _datahora.day();    _campos[0][2] = 110; _campos[0][3] = 45; _campos[0][4] = 1; _campos[0][5] = 31;

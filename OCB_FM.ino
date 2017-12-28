@@ -1,12 +1,48 @@
+/////////////////////
+// Inicializa FM   //
+/////////////////////
+bool iniciaFM()
+{
+#ifdef DEBUG
+  Serial.print("Inicializando Radio... ");
+#endif  
+  if(!radio.init())                                        // Inicializa o Radio 
+#ifdef DEBUG
+     Serial.println("Falhou!");
+#endif  
+  else
+#ifdef DEBUG
+     Serial.println("OK!");
+     radio.debugEnable();                                  // Habilita informacoes de debug dos comandos do radio para a porta Serial
+#endif 
+    radio.setBandFrequency(FIX_BAND, FIX_STATION);         // Define configuracoes de Banda e Frequencia inicial do radio
+    radio.setVolume(FIX_VOLUME);                           // Define configuracoes de Volume inicial do radio
+    radio.setMono(false);
+    radio.setMute(false);
+    radio.setSoftMute(false);
+    radio.attachReceiveRDS(RDS_process);                   // setup the information chain for RDS data.
+    rds.attachServicenNameCallback(DisplayServiceName);
+    encoderFrq.setPosition(FIX_STATION / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Default
+#ifdef DEBUG
+  Serial.print("Debug Radio... ");
+  radio.debugRadioInfo();
+  Serial.print("Debug Audio... ");
+  radio.debugAudioInfo();
+  //radio.debugStatus();
+#endif
+  return 1;
+}
+
 //////////////////////
 // Executa Radio FM //
 //////////////////////
 void executaFM()
-{
+{ 
   unsigned long             _now           = millis();
   unsigned long             _nextFreqTime  = 1;
-  int                       lastPosVol     = -1;
-  int                       lastPosFrq     = -1;
+  int                       _lastPosVol    = -1;
+  int                       _lastPosFrq    = -1;
+  
   String                    BAND[]         = {"FM", "FM Mundo", "AM", "KW"};
 
   #define                   ROTARYSTEPS        1
@@ -19,46 +55,45 @@ void executaFM()
   {
     _now = millis();
   
-    encoderVol.tick();                                        // Verifica o encoder do Volume
+    encoderVol.tick();                                         // Verifica o encoder do Volume
 
-    int newPosVol = encoderVol.getPosition() * ROTARYSTEPS;   // captura a posição fisica atual e calcula a posição lógica
+    int _newPosVol = encoderVol.getPosition() * ROTARYSTEPS;   // captura a posição fisica atual e calcula a posição lógica
 
-    if (newPosVol < ROTARYMIN) {
+    if (_newPosVol < ROTARYMIN) {
       encoderVol.setPosition(ROTARYMIN / ROTARYSTEPS);
-      newPosVol = ROTARYMIN;
-    } else if (newPosVol > ROTARYMAX) {
+      _newPosVol = ROTARYMIN;
+    } else if (_newPosVol > ROTARYMAX) {
       encoderVol.setPosition(ROTARYMAX / ROTARYSTEPS);
-      newPosVol = ROTARYMAX;
+      _newPosVol = ROTARYMAX;
     } 
 
-    if (lastPosVol != newPosVol) {
+    if (_lastPosVol != _newPosVol) {
 #ifdef DEBUG
-      Serial.print("Rotary Volume ");
-      Serial.println(newPosVol);
+      Serial.print("Rotary Volume ");  Serial.println(_newPosVol);
 #endif    
-      lastPosVol = newPosVol;
-      radio.setVolume(lastPosVol);
+      _lastPosVol = _newPosVol;
+      radio.setVolume(_lastPosVol);
       mostraVolume();    
     } 
 
     encoderFrq.tick();
-    int newPosFrq = encoderFrq.getPosition() * radio.getFrequencyStep();
+    int _newPosFrq = encoderFrq.getPosition() * radio.getFrequencyStep();
 
-    if (newPosFrq < radio.getMinFrequency()) {
+    if (_newPosFrq < radio.getMinFrequency()) {
       encoderFrq.setPosition(radio.getMinFrequency() / radio.getFrequencyStep());
-      newPosFrq = radio.getMinFrequency();
-    } else if (newPosFrq > radio.getMaxFrequency()) {
+      _newPosFrq = radio.getMinFrequency();
+    } else if (_newPosFrq > radio.getMaxFrequency()) {
       encoderFrq.setPosition(radio.getMaxFrequency() / radio.getFrequencyStep());
-      newPosFrq = radio.getMaxFrequency();
+      _newPosFrq = radio.getMaxFrequency();
     } 
 
-    if (lastPosFrq != newPosFrq) {
+    if (_lastPosFrq != _newPosFrq) {
 #ifdef DEBUG
       Serial.print("Rotary Frequencia ");
-      Serial.println(newPosFrq);
+      Serial.println(_newPosFrq);
 #endif
-      lastPosFrq = newPosFrq;
-      radio.setFrequency(lastPosFrq);
+      _lastPosFrq = _newPosFrq;
+      radio.setFrequency(_lastPosFrq);
       mostraFrequencia(100); 
     } 
 
@@ -84,6 +119,7 @@ void executaFM()
       radio.checkRDS();
       radio.getRadioInfo(&radioInfo);
       radio.getAudioInfo(&audioInfo);
+      radio.checkRDS();
 
       monitor.setTextColor(WHITE,BLACK);  
       imprimeTexto(BAND[radio.getBand()-1],"C",45);
@@ -123,8 +159,9 @@ void DisplayServiceName(char *name) {
 ////////////////////////////////////////////////////////////////
 void mostraFrequencia(int16_t _lin)
 {
-  int16_t vlinMax = monitor.height();
-  char s[12];
+  int16_t _linMax    = monitor.height();
+  char    s[12];
+  
   radio.formatFrequency(s, sizeof(s));               // Formata a frequencia sintonizada
   radio.clearRDS();
 
@@ -134,33 +171,33 @@ void mostraFrequencia(int16_t _lin)
   if ( radioInfo.tuned )                              // Mostra simbolo de radio sintonizado - bolinha verde
      monitor.fillCircle(75, _lin, 5, GREEN);
      
-  if (v_colAnte> 0) {
-     monitor.drawFastVLine(v_colAnte  , vlinMax-83, 40, BLACK);
-     monitor.drawFastVLine(v_colAnte+1, vlinMax-83, 40, BLACK);
+  if (_colAnte > 0) {
+     monitor.drawFastVLine(_colAnte  , _linMax-83, 40, BLACK);
+     monitor.drawFastVLine(_colAnte+1, _linMax-83, 40, BLACK);
   }
   
-  int _x = 10;
+  int _x   = 10;
   int _tam = 10;                                      // Mostra barra de frequencia
   for (int i=0; i<(_tam*21); i+=_tam)
   { 
     if (i%25 == 0) _x=20; else _x=10;
-    monitor.drawFastVLine(80+i, vlinMax-53-_x, _x, WHITE);
+    monitor.drawFastVLine(80+i, _linMax-53-_x, _x, WHITE);
   }
 
   // Calcular o movimento da frequencia o mostra barra da sintonia 
   float _colFreq = map(radio.getFrequency(), radio.getMinFrequency(), radio.getMaxFrequency(), 80, 280);
-  monitor.drawFastVLine(_colFreq  , vlinMax-63-_x, _x+20, ORANGE);
-  monitor.drawFastVLine(_colFreq+1, vlinMax-63-_x, _x+20, ORANGE);
-  v_colAnte = _colFreq;
+  monitor.drawFastVLine(_colFreq  , _linMax-63-_x, _x+20, ORANGE);
+  monitor.drawFastVLine(_colFreq+1, _linMax-63-_x, _x+20, ORANGE);
+  _colAnte = _colFreq;
 }
 ////////////////////////////////////////////////////////////////
 void mostraVolume()
 {
-  int16_t vlinMax = monitor.height();
+  int16_t _linMax = monitor.height();
 #ifdef DEBUG
   Serial.print(" Volume  : ");Serial.println(radio.getVolume());
 #endif
-  mostraTermometro("Vol", radio.getVolume(), radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, vlinMax-43, 20 );
+  mostraTermometro("Vol", radio.getVolume(), radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, _linMax-43, 20 );
 }
 ////////////////////////////////////////////////////////////////
 void mostraSinal(int16_t _col, int16_t _lin, int16_t _tam, int16_t _forma)
