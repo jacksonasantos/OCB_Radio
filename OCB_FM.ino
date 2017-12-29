@@ -119,7 +119,6 @@ void executaFM()
       radio.checkRDS();
       radio.getRadioInfo(&radioInfo);
       radio.getAudioInfo(&audioInfo);
-      radio.checkRDS();
 
       monitor.setTextColor(WHITE,BLACK);  
       imprimeTexto(BAND[radio.getBand()-1],"C",45);
@@ -140,21 +139,35 @@ void executaFM()
 }
 ////////////////////////////////////////////////////////////////
 void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) {
+  g_block1 = block1;
   rds.processData(block1, block2, block3, block4);
 }
 ////////////////////////////////////////////////////////////////
 void mostraRDS() {
-  radio.attachReceiveRDS(RDS_process);
-  rds.attachServicenNameCallback(DisplayServiceName);
+  if ( g_block1 ) {
+#ifdef DEBUG
+    Serial.print('RDS [');  Serial.print(g_block1, HEX); Serial.println(']');
+#endif          
+  } 
 }
 ////////////////////////////////////////////////////////////////
 /// Update the ServiceName text on the LCD display when in RDS mode.
-void DisplayServiceName(char *name) {
+void DisplayServiceName(char *name) 
+{
+  bool found = false;
+
+  for (uint8_t n = 0; n < 8; n++)
+    if (name[n] != ' ') found = true;
+
+  if (found) {
 #ifdef DEBUG
-  Serial.print("RDS: "); Serial.println(name);
+    Serial.print("RDS:");
+    Serial.print(name);
+    Serial.println('.');
 #endif
-  monitor.setTextSize(1);
-  imprimeTexto(name,"C",135);
+    monitor.setTextSize(1);
+    imprimeTexto(name,"C",135);
+  }
 } 
 ////////////////////////////////////////////////////////////////
 void mostraFrequencia(int16_t _lin)
@@ -162,13 +175,13 @@ void mostraFrequencia(int16_t _lin)
   int16_t _linMax    = monitor.height();
   char    s[12];
   
-  radio.formatFrequency(s, sizeof(s));               // Formata a frequencia sintonizada
+  radio.formatFrequency(s, sizeof(s));                 // Formata a frequencia sintonizada
   radio.clearRDS();
 
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(3);
   imprimeTexto(s,"C",_lin);                            // Mostra a frequencia sintonizada em numeros formatada
-  if ( radioInfo.tuned )                              // Mostra simbolo de radio sintonizado - bolinha verde
+  if ( radioInfo.tuned )                               // Mostra simbolo de radio sintonizado - bolinha verde
      monitor.fillCircle(75, _lin, 5, GREEN);
      
   if (_colAnte > 0) {
@@ -177,7 +190,7 @@ void mostraFrequencia(int16_t _lin)
   }
   
   int _x   = 10;
-  int _tam = 10;                                      // Mostra barra de frequencia
+  int _tam = 10;                                       // Mostra barra de frequencia
   for (int i=0; i<(_tam*21); i+=_tam)
   { 
     if (i%25 == 0) _x=20; else _x=10;

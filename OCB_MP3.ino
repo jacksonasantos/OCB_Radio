@@ -177,7 +177,6 @@ void mostraEQMP3()
 
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(1);
-
   imprimeTexto(DESC_EQ[mp3player.readEQ()],"D",60);
   monitor.setTextSize(2);
 }
@@ -193,30 +192,30 @@ void mostraVolumeMP3()
 //////////////////////////////////
 // Apresenta detalhes do Player //
 //////////////////////////////////
-void printDetail(uint8_t type, int value, int vposmsg ){
+void printDetail(uint8_t type, int value, int p_posmsg ){
   
   monitor.setTextColor(WHITE,BLUE);  
   monitor.setTextSize(1);
   switch (type) {
     case TimeOut:
       Serial.println(F("Time Out!"));
-      imprimeTexto("Tempo Esgotado!","C",vposmsg);
+      imprimeTexto("Tempo Esgotado!","C",p_posmsg);
       break;
     case WrongStack:
       Serial.println(F("Stack Wrong!"));
-      imprimeTexto("Erro de Empilhamento!","C",vposmsg);
+      imprimeTexto("Erro de Empilhamento!","C",p_posmsg);
       break;
     case DFPlayerCardInserted:
       Serial.println(F("Card Inserted!"));
-      imprimeTexto("Cartão Inserido!","C",vposmsg);
+      imprimeTexto("Cartão Inserido!","C",p_posmsg);
       break;
     case DFPlayerCardRemoved:
       Serial.println(F("Card Removed!"));
-      imprimeTexto("Cartao Removido!","C",vposmsg);
+      imprimeTexto("Cartao Removido!","C",p_posmsg);
       break;
     case DFPlayerCardOnline:
       Serial.println(F("Card Online!"));
-      imprimeTexto("Cartao OnLine!","C",vposmsg);
+      imprimeTexto("Cartao OnLine!","C",p_posmsg);
       break;
     case DFPlayerPlayFinished:
       Serial.print(F("Number:"));
@@ -228,31 +227,31 @@ void printDetail(uint8_t type, int value, int vposmsg ){
       switch (value) {
         case Busy:
           Serial.println(F("Card not found"));
-          imprimeTexto("Erro: Cartao nao encontrado...","C",vposmsg);
+          imprimeTexto("Erro: Cartao nao encontrado...","C",p_posmsg);
           break;
         case Sleeping:
           Serial.println(F("Sleeping"));
-          imprimeTexto("Erro: Dormindo...","C",vposmsg);
+          imprimeTexto("Erro: Dormindo...","C",p_posmsg);
           break;
         case SerialWrongStack:
           Serial.println(F("Get Wrong Stack"));
-          imprimeTexto("Erro: Get Wrong Stack...","C",vposmsg);
+          imprimeTexto("Erro: Get Wrong Stack...","C",p_posmsg);
           break;
         case CheckSumNotMatch:
           Serial.println(F("Check Sum Not Match"));
-          imprimeTexto("Erro: Check Sum Not Match...","C",vposmsg);
+          imprimeTexto("Erro: Check Sum Not Match...","C",p_posmsg);
           break;
         case FileIndexOut:
           Serial.println(F("File Index Out of Bound"));
-          imprimeTexto("Erro: Indice do Arquivo nao encontrado...","C",vposmsg);
+          imprimeTexto("Erro: Indice do Arquivo nao encontrado...","C",p_posmsg);
           break;
         case FileMismatch:
           Serial.println(F("Cannot Find File"));
-          imprimeTexto("Erro: Arquivo nao encontrado...","C",vposmsg);
+          imprimeTexto("Erro: Arquivo nao encontrado...","C",p_posmsg);
           break;
         case Advertise:
           Serial.println(F("In Advertise"));
-          imprimeTexto("Erro: Em Anuncio...","C",vposmsg);
+          imprimeTexto("Erro: Em Anuncio...","C",p_posmsg);
           break;
         default:
           break;

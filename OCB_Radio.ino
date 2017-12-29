@@ -18,6 +18,7 @@
 #include <DFRobotDFPlayerMini.h>                                // Controlar Mini Player MP3 - SD
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
+uint16_t g_block1;
 int                       btnPrevState   = 0;
 int                       btnNextState   = 0;
 int                       btnMuteState   = 0;
@@ -154,7 +155,8 @@ else {
      { imprimeTexto("Setup","E",5);
        executaSetup(); }                         
   else if(btnModoState == 2)                          // Executa o modo Radio FM
-     { imprimeTexto("Radio","E",5);
+     { radio.setMute(0);
+       imprimeTexto("Radio","E",5);
        executaFM(); }
   else if(btnModoState == 3)                          // Executa o modo MP3 no SD
      { radio.setMute(1);
