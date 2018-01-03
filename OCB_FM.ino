@@ -4,16 +4,18 @@
 bool iniciaFM()
 {
 #ifdef DEBUG
-  Serial.print("Inicializando Radio... ");
+    Serial.print("Inicializando Radio... ");
 #endif  
-  if(!radio.init())                                        // Inicializa o Radio 
+  if(!radio.init()) {                                       // Inicializa o Radio 
 #ifdef DEBUG
-     Serial.println("Falhou!");
-#endif  
-  else
+    Serial.println("Falhou!");
+#endif
+    return -1;
+  }  
+  else {
 #ifdef DEBUG
-     Serial.println("OK!");
-     radio.debugEnable();                                  // Habilita informacoes de debug dos comandos do radio para a porta Serial
+    Serial.println("OK!");
+    radio.debugEnable();                                  // Habilita informacoes de debug dos comandos do radio para a porta Serial
 #endif 
     radio.setBandFrequency(FIX_BAND, FIX_STATION);         // Define configuracoes de Banda e Frequencia inicial do radio
     radio.setVolume(FIX_VOLUME);                           // Define configuracoes de Volume inicial do radio
@@ -24,13 +26,14 @@ bool iniciaFM()
     rds.attachServicenNameCallback(DisplayServiceName);
     encoderFrq.setPosition(FIX_STATION / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Default
 #ifdef DEBUG
-  Serial.print("Debug Radio... ");
-  radio.debugRadioInfo();
-  Serial.print("Debug Audio... ");
-  radio.debugAudioInfo();
-  //radio.debugStatus();
+    Serial.print("Debug Radio... ");
+    radio.debugRadioInfo();
+    Serial.print("Debug Audio... ");
+    radio.debugAudioInfo();
+    //radio.debugStatus();
 #endif
-  return 1;
+    return 1;
+  }
 }
 
 //////////////////////
@@ -69,7 +72,7 @@ void executaFM()
 
     if (_lastPosVol != _newPosVol) {
 #ifdef DEBUG
-      Serial.print("Rotary Volume ");  Serial.println(_newPosVol);
+    Serial.print("Rotary Volume ");  Serial.println(_newPosVol);
 #endif    
       _lastPosVol = _newPosVol;
       radio.setVolume(_lastPosVol);
@@ -89,8 +92,8 @@ void executaFM()
 
     if (_lastPosFrq != _newPosFrq) {
 #ifdef DEBUG
-      Serial.print("Rotary Frequencia ");
-      Serial.println(_newPosFrq);
+    Serial.print("Rotary Frequencia ");
+    Serial.println(_newPosFrq);
 #endif
       _lastPosFrq = _newPosFrq;
       radio.setFrequency(_lastPosFrq);
@@ -101,19 +104,21 @@ void executaFM()
     btnPrevState = digitalRead(btnPrevPin);
     btnNextState = digitalRead(btnNextPin);
     
-    if (btnMuteState == LOW) {              
+    if (btnMuteState == LOW) {                                // Verifica Botão de Mude      
       radio.setMute(!radio.getMute());
       delay(500);
     }
-    else if (btnPrevState == HIGH){
+    else if (btnPrevState == HIGH){                           // Verifica Seek Avançar
       radio.seekDown(false);
+      delay(10);
       encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
     }
-    else if (btnNextState == HIGH){
+    else if (btnNextState == HIGH){                          // Verifica Seek Retroceder
       radio.seekUp(false);
+      delay(10);
       encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
     }
-    else if (_now > _nextFreqTime )                                             // Atualiza tela do radio
+    else if (_now > _nextFreqTime )                          // Verifica Atualização da tela do radio
     { 
       mostra_relogio();
       radio.checkRDS();
@@ -140,13 +145,16 @@ void executaFM()
 ////////////////////////////////////////////////////////////////
 void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) {
   g_block1 = block1;
+  g_block2 = block2;
+  g_block3 = block3;
+  g_block4 = block4;
   rds.processData(block1, block2, block3, block4);
 }
 ////////////////////////////////////////////////////////////////
 void mostraRDS() {
   if ( g_block1 ) {
 #ifdef DEBUG
-    Serial.print('RDS [');  Serial.print(g_block1, HEX); Serial.println(']');
+    Serial.print('RDS [');  Serial.print(g_block1, HEX); Serial.print(g_block2, HEX); Serial.print(g_block3, HEX); Serial.print(g_block4, HEX); Serial.println(']');
 #endif          
   } 
 }
@@ -219,30 +227,32 @@ void mostraSinal(int16_t _col, int16_t _lin, int16_t _tam, int16_t _forma)
   Serial.print(" Sinal   : ");Serial.println(radioInfo.snr);
 #endif
 
-// Forma de Triangulo
-if (_forma == 1){  
-  monitor.fillTriangle(_col+_tam+2,_lin-(_tam/2)-2,_col+_tam+1,_lin+1,_col-3,_lin+1,WHITE); 
-  monitor.fillTriangle(_col+_tam  ,_lin-(_tam/2)  ,_col+_tam  ,_lin  ,_col  ,_lin  ,BLACK); 
-}
-// Forma de Radar
-else {  
-  monitor.drawCircle(_col, _lin, 5, GREEN);
-}
-
-  int _sinal = map(radioInfo.snr,0,127,0,5);
-  if ( _sinal > (_tam/2) ) {_sinal = (_tam/2);}
-     
-  int y = 0;
-  for (int x = 1; x <= _sinal; x++) { 
-    if (_forma == 1){  
-      monitor.drawFastVLine(_col+(2*x), _lin-x, x, WHITE);
-    }
-    else {
-      if (x==1)
-        monitor.fillCircle(_col, _lin, 5, GREEN);
+if (radioInfo.snr > 0) {
+  // Forma de Triangulo
+  if (_forma == 1) {  
+    monitor.fillTriangle(_col+_tam+2,_lin-(_tam/2)-2,_col+_tam+1,_lin+1,_col-3,_lin+1,WHITE); 
+    monitor.fillTriangle(_col+_tam  ,_lin-(_tam/2)  ,_col+_tam  ,_lin  ,_col  ,_lin  ,BLACK); 
+  }
+  // Forma de Radar
+  else {  
+    monitor.drawCircle(_col, _lin, 5, GREEN);
+  }
+  
+    int _sinal = map(radioInfo.snr,0,127,0,5);
+    if ( _sinal > (_tam/2) ) {_sinal = (_tam/2);}
+       
+    int y = 0;
+    for (int x = 1; x <= _sinal; x++) { 
+      if (_forma == 1){  
+        monitor.drawFastVLine(_col+(2*x), _lin-x, x, WHITE);
+      }
       else {
-        monitor.drawCircleHelper(_col , _lin - (x+y), 10+y, 3, GREEN);     
-        y = y+3;
+        if (x==1)
+          monitor.fillCircle(_col, _lin, 5, GREEN);
+        else {
+          monitor.drawCircleHelper(_col , _lin - (x+y), 10+y, 3, GREEN);     
+          y = y+3;
+        }
       }
     }
   }
