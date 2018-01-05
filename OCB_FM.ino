@@ -47,6 +47,8 @@ void executaFM()
   int                       _lastPosFrq    = -1;
   
   String                    BAND[]         = {"FM", "FM Mundo", "AM", "KW"};
+  char                      rdsBuffer[10];
+  char                      rdsAnter[10];
 
   #define                   ROTARYSTEPS        1
   #define                   ROTARYMIN          0
@@ -121,7 +123,20 @@ void executaFM()
     else if (_now > _nextFreqTime )                          // Verifica Atualização da tela do radio
     { 
       mostra_relogio();
-      radio.checkRDS();
+      
+      radio.checkRDS(rdsBuffer, 500);
+#ifdef DEBUG
+    Serial.print("RDS heard:");
+    Serial.println(rdsBuffer);      
+#endif
+  monitor.setTextSize(1);
+  if (rdsAnter[0] != rdsBuffer[0]) {
+  monitor.fillRect( 35, 135, monitor.width()-30, 15, BLACK);
+        rdsAnter[0] = rdsBuffer[0];
+      }
+  imprimeTexto(rdsBuffer,"C",135);
+  monitor.setTextSize(2);
+
       radio.getRadioInfo(&radioInfo);
       radio.getAudioInfo(&audioInfo);
 
@@ -136,7 +151,6 @@ void executaFM()
       monitor.setTextSize(2);
       mostraSinal( 60, 120, 40, 2);     // usar 3o parametro com valor PAR | 4o param (1)=Triangulo (2)=Radar
       mostraFrequencia(100);
-      mostraRDS(); 
       mostraVolume();    
       _nextFreqTime = _now + 1000;
     }
@@ -144,19 +158,7 @@ void executaFM()
 }
 ////////////////////////////////////////////////////////////////
 void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) {
-  g_block1 = block1;
-  g_block2 = block2;
-  g_block3 = block3;
-  g_block4 = block4;
   rds.processData(block1, block2, block3, block4);
-}
-////////////////////////////////////////////////////////////////
-void mostraRDS() {
-  if ( g_block1 ) {
-#ifdef DEBUG
-    Serial.print('RDS [');  Serial.print(g_block1, HEX); Serial.print(g_block2, HEX); Serial.print(g_block3, HEX); Serial.print(g_block4, HEX); Serial.println(']');
-#endif          
-  } 
 }
 ////////////////////////////////////////////////////////////////
 /// Update the ServiceName text on the LCD display when in RDS mode.
@@ -169,14 +171,21 @@ void DisplayServiceName(char *name)
 
   if (found) {
 #ifdef DEBUG
-    Serial.print("RDS:");
+    Serial.print("RDS TEX :");
     Serial.print(name);
-    Serial.println('.');
+    Serial.println("---------------------------------------");
+    
+    Serial.print("Debug Radio... ");
+    radio.debugRadioInfo();
+    Serial.print("Debug Audio... ");
+    radio.debugAudioInfo();    
 #endif
     monitor.setTextSize(1);
+    monitor.fillRect( 30, 135, monitor.width()-30, 15, BLACK);
     imprimeTexto(name,"C",135);
   }
 } 
+
 ////////////////////////////////////////////////////////////////
 void mostraFrequencia(int16_t _lin)
 {
@@ -184,7 +193,6 @@ void mostraFrequencia(int16_t _lin)
   char    s[12];
   
   radio.formatFrequency(s, sizeof(s));                 // Formata a frequencia sintonizada
-  radio.clearRDS();
 
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(3);

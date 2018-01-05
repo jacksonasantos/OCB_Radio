@@ -4,7 +4,7 @@
 // Data     : 15/09/2017
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 
-//#define DEBUG                                                // Flag de debug (Se habilitado. Deixa o sistemas mais lento)
+#define DEBUG                                                // Flag de debug (Se habilitado. Deixa o sistemas mais lento)
 
                                                              // Inclusao de Biblioteca utilizadas
 #include <Arduino.h>                                            // Biblioteca Padrao Arduino
@@ -17,13 +17,9 @@
 #include <RDSParser.h>                                          // Controlar o conteudo do RDS do radio
 #include <RotaryEncoder.h>                                      // Controlar os Encoder´s
 #include <DFRobotDFPlayerMini.h>                                // Controlar Mini Player MP3 - SD
-#include <SoftwareSerial.h>
+#include <SoftwareSerial.h>                                     // Controlar a Interface Serial via Software
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
-uint16_t g_block1;
-uint16_t g_block2;
-uint16_t g_block3;
-uint16_t g_block4;
 int                       btnPrevState   = 0;
 int                       btnNextState   = 0;
 int                       btnMuteState   = 0;
@@ -41,7 +37,7 @@ const int                 btnMutePin     = 8;                      // 8         
 const int                 btnModoPin     = 9;                      // 9              - PWM         - Botão Modo
                                                                 // Definicao Objetos
 RTC_DS3231                relogio;                                 // I2C(SCL1/SDA1) - Digital     - Modulo RTC          ligado as portas I2C                   
-SoftwareSerial            mySoftwareSerial(17, 16);                // 10-11          - PWM         - Modulo MP3          ligado as portas RX, TX na SoftSerial
+SoftwareSerial            mySoftwareSerial(17, 16);                // 17-16          - Digital     - Modulo MP3          ligado as portas RX2, TX2 na SoftSerial2
 SI4703                    radio;                                   // 20-21          - Digital     - Modulo SI4703       ligado as portas I2C (SCL/SDA) do Mega 
                                                                    // 22-29          - Digital     - Modulo TFT LCD      ligado as portas D0-D7
 Adafruit_TFTLCD           monitor(40, 38, 39, 42, 41);             // 38-42          - Digital     - Modulo LCD          ligado as portas de controle RD,WS,RS,CS,RST
