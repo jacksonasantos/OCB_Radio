@@ -4,9 +4,9 @@
 bool iniciaFM()
 {
 #ifdef DEBUG
-    Serial.print("Inicializando Radio... ");
+    Serial.print("Inicializando Radio....... ");
 #endif  
-  if(!radio.init()) {                                       // Inicializa o Radio 
+  if(!radio.init()) {                                      // Inicializa o Radio 
 #ifdef DEBUG
     Serial.println("Falhou!");
 #endif
@@ -15,8 +15,9 @@ bool iniciaFM()
   else {
 #ifdef DEBUG
     Serial.println("OK!");
-    radio.debugEnable();                                  // Habilita informacoes de debug dos comandos do radio para a porta Serial
+    radio.debugEnable();                                   // Habilita informacoes de debug dos comandos do radio para a porta Serial
 #endif 
+    Serial.println("Configurando o Radio...... ");
     radio.setBandFrequency(FIX_BAND, FIX_STATION);         // Define configuracoes de Banda e Frequencia inicial do radio
     radio.setVolume(FIX_VOLUME);                           // Define configuracoes de Volume inicial do radio
     radio.setMono(false);
@@ -30,7 +31,6 @@ bool iniciaFM()
     radio.debugRadioInfo();
     Serial.print("Debug Audio... ");
     radio.debugAudioInfo();
-    //radio.debugStatus();
 #endif
     return 1;
   }
@@ -41,12 +41,12 @@ bool iniciaFM()
 //////////////////////
 void executaFM()
 { 
-  unsigned long             _now           = millis();
-  unsigned long             _nextFreqTime  = 1;
-  int                       _lastPosVol    = -1;
-  int                       _lastPosFrq    = -1;
+  unsigned long             _now               = millis();
+  unsigned long             _nextFreqTime      = 1;
+  int                       _lastPosVol        = -1;
+  int                       _lastPosFrq        = -1;
   
-  String                    BAND[]         = {"FM", "FM Mundo", "AM", "KW"};
+  String                    BAND[]             = {"FM", "FM Mundo", "AM", "KW"};
   char                      rdsBuffer[10];
   char                      rdsAnter[10];
 
@@ -222,11 +222,10 @@ void mostraFrequencia(int16_t _lin)
 ////////////////////////////////////////////////////////////////
 void mostraVolume()
 {
-  int16_t _linMax = monitor.height();
 #ifdef DEBUG
   Serial.print(" Volume  : ");Serial.println(radio.getVolume());
 #endif
-  mostraTermometro("Vol", radio.getVolume(), radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, _linMax-43, 20 );
+  mostraTermometro("Vol", radio.getVolume(), radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, monitor.height()-43, 20 );
 }
 ////////////////////////////////////////////////////////////////
 void mostraSinal(int16_t _col, int16_t _lin, int16_t _tam, int16_t _forma)

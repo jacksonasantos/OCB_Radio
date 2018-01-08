@@ -8,6 +8,7 @@ bool iniciaMP3(uint8_t device)
     return -1;
   }
   else {
+    delay(300);
     mp3player.setTimeOut(500);                          	// Define o time out (500ms) da comunicacao serial
     mp3player.enableDAC();                                // Enable On-chip DAC
     mp3player.outputDevice(device);                       // Configura o tipo de device a usar
@@ -36,8 +37,7 @@ void executaMp3(uint8_t device)
 {
 
 #ifdef DEBUG
-    Serial.print("Inicializando MP3 Player... ");
-    Serial.print(device);
+    Serial.print("Inicializando MP3 Player.. ");
 #endif  
   if (!iniciaMP3(device)){
 #ifdef DEBUG
@@ -146,14 +146,14 @@ void executaMp3(uint8_t device)
     else if (btnPrevState == HIGH){
       mp3player.previous();
       delay(300);
+    
+    monitor.setTextColor(WHITE,BLACK);  
+    monitor.setTextSize(2);
     }
     else if (btnNextState == HIGH){
       mp3player.next();
       delay(300);
     }
-    
-    monitor.setTextColor(WHITE,BLACK);  
-    monitor.setTextSize(2);
     imprimeTexto( String(mp3player.readFileCounts(device)),"C", 70);
     imprimeTexto( String(mp3player.readCurrentFileNumber(device)),"C", 90);
     

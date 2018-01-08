@@ -4,7 +4,7 @@
 void iniciaTFT() 
 {
 #ifdef DEBUG
-  Serial.print("Inicializando monitor... ");
+  Serial.print("Inicializando monitor..... ");
 #endif  
   monitor.reset();                                		// Reinicia o tft
   monitor.begin(vg_identifier);                   		// Inicializa tft 
@@ -20,16 +20,19 @@ void iniciaTFT()
 void telaIntroducao() 
 {
 #ifdef DEBUG
-  Serial.print("Apresentando Tela Introducao... ");
+  Serial.print("Apresentando Introducao... ");
 #endif  
-//  bmpDraw("logo.bmp", 0, 0);
+  // Preenche monitor com Fundo
+  monitor.fillScreen(WHITE);
   
-  monitor.setCursor(0,5);
-  monitor.setTextColor(BLUE); 
-  monitor.setTextSize(2);
-//  monitor.println( "  OnBoard Computer Beetle");  
+  bmpDraw("logo.bmp", 0, 0);
+  
+  //monitor.setCursor(0,5);
+  //monitor.setTextColor(BLUE); 
+  //monitor.setTextSize(2);
+  //monitor.println( "  OnBoard Computer Beetle");  
 
-  delay(5000);
+  //delay(5000);
 #ifdef DEBUG
   Serial.println("OK!");
 #endif    
@@ -40,18 +43,15 @@ void telaIntroducao()
 ///////////////////////
 void preparaTFT() 
 {  
-  // Preenche monitor com Preto
-  monitor.fillScreen(BLACK);                      
-
   // Desenha cabecalho
-  monitor.fillRect(0,  0, monitor.width()-1, 25, BLUE);   
-  monitor.fillRect(0, 25, monitor.width()-1,  1, DARKGREY);   
-  monitor.fillRect(0, 26, monitor.width()-1,  1, WHITE);   
-  monitor.fillRect(0, 27, monitor.width()-1,  1, DARKGREY);   
-  monitor.fillRect(0, 28, monitor.width()-1,  5, BLUE);   
+  monitor.fillRect(0,  0, monitor.width(), 25, BLUE);   
+  monitor.fillRect(0, 25, monitor.width(),  1, DARKGREY);   
+  monitor.fillRect(0, 26, monitor.width(),  1, WHITE);   
+  monitor.fillRect(0, 27, monitor.width(),  1, DARKGREY);   
+  monitor.fillRect(0, 28, monitor.width(),  5, BLUE);   
 
   // Desenha Rodape
-  monitor.fillRect(0, monitor.height()-25, monitor.width()-1, 25, BLUE); 
+  monitor.fillRect(0, monitor.height()-25, monitor.width(), 25, BLUE); 
 } 
 
 ///////////////////
@@ -174,98 +174,105 @@ void mostra_relogio()
 
   monitor.setTextColor(WHITE);
 }
-
-
-/*
+/////////////////////
+// Função bmpDraw  //
+/////////////////////
 #define BUFFPIXEL 20
 
 void bmpDraw(char *filename, int x, int y) {
 
   File     bmpFile;
-  int      bmpWidth, bmpHeight;   // W+H in pixels
-  uint8_t  bmpDepth;              // Bit depth (currently must be 24)
-  uint32_t bmpImageoffset;        // Start of image data in file
-  uint32_t rowSize;               // Not always = bmpWidth; may have padding
-  uint8_t  sdbuffer[3*BUFFPIXEL]; // pixel in buffer (R+G+B per pixel)
-  uint16_t lcdbuffer[BUFFPIXEL];  // pixel out buffer (16-bit per pixel)
-  uint8_t  buffidx = sizeof(sdbuffer); // Current position in sdbuffer
-  boolean  goodBmp = false;       // Set to true on valid header parse
-  boolean  flip    = true;        // BMP is stored bottom-to-top
+  int      bmpWidth, bmpHeight;                               // W+H in pixels
+  uint8_t  bmpDepth;                                          // Bit depth (currently must be 24)
+  uint32_t bmpImageoffset;                                    // Start of image data in file
+  uint32_t rowSize;                                           // Not always = bmpWidth; may have padding
+  uint8_t  sdbuffer[3*BUFFPIXEL];                             // pixel in buffer (R+G+B per pixel)
+  uint16_t lcdbuffer[BUFFPIXEL];                              // pixel out buffer (16-bit per pixel)
+  uint8_t  buffidx                     = sizeof(sdbuffer);    // Current position in sdbuffer
+  boolean  goodBmp                     = false;               // Set to true on valid header parse
+  boolean  flip                        = true;                // BMP is stored bottom-to-top
   int      w, h, row, col;
   uint8_t  r, g, b;
-  uint32_t pos = 0, startTime = millis();
-  uint8_t  lcdidx = 0;
-  boolean  first = true;
+  uint32_t pos                         = 0;
+  uint32_t startTime                   = millis();
+  uint8_t  lcdidx                      = 0;
+  boolean  first                       = true;
 
   if((x >= monitor.width()) || (y >= monitor.height())) return;
 
 #ifdef DEBUG
   Serial.println();
-  Serial.print(F("Loading image '"));
-  Serial.println(filename);
+  Serial.print(F("    Carregando imagem : "));    Serial.println(filename);
 #endif  
-  // Open requested file on SD card
-  if ((bmpFile = SD.open(filename)) == NULL) {
+  if ((bmpFile = SD.open(filename)) == NULL) {                // Abrir o arquivo solicitado no cartão SD
 #ifdef DEBUG
-    Serial.println(F("File not found"));
+    Serial.println(F("    Arquivo nao encontrado !!!!"));
 #endif  
     return;
   }
 
   // Parse BMP header
-  if(read16(bmpFile) == 0x4D42) { // BMP signature
-    Serial.println(F("File size: ")); Serial.println(read32(bmpFile));
-    (void)read32(bmpFile); // Read & ignore creator bytes
-    bmpImageoffset = read32(bmpFile); // Start of image data
-    Serial.print(F("Image Offset: ")); Serial.println(bmpImageoffset, DEC);
-    // Read DIB header
-    Serial.print(F("Header size: ")); Serial.println(read32(bmpFile));
-    bmpWidth  = read32(bmpFile);
+  if(read16(bmpFile) == 0x4D42) {                             // Verifica a assintatura de um arquivo BMP
+    Serial.print(F("    Tamanho Arquivo   : ")); 
+    Serial.println(read32(bmpFile));
+    Serial.print(F("    Criador Arquivo   : ")); 
+    Serial.println(read32(bmpFile));                          // Read creator
+    bmpImageoffset = read32(bmpFile);                         // Start of image data
+    Serial.print(F("    Image Offset      : ")); 
+    Serial.println(bmpImageoffset, DEC);
+    Serial.print(F("    Tamanho Header    : ")); 
+    Serial.println(read32(bmpFile));
+    bmpWidth  = read32(bmpFile);                              // Read DIB header
     bmpHeight = read32(bmpFile);
-    if(read16(bmpFile) == 1) { // # planes -- must be '1'
-      bmpDepth = read16(bmpFile); // bits per pixel
-      Serial.print(F("Bit Depth: ")); Serial.println(bmpDepth);
-      if((bmpDepth == 24) && (read32(bmpFile) == 0)) { // 0 = uncompressed
 
-        goodBmp = true; // Supported BMP format -- proceed!
-        Serial.print(F("Image size: "));
-        Serial.print(bmpWidth);
-        Serial.print('x');
-        Serial.println(bmpHeight);
+    if(read16(bmpFile) == 1) {                                // # planes -- must be '1'
+      bmpDepth = read16(bmpFile);                             // bits per pixel
+      Serial.print(F("    Bit Depth         : ")); 
+      Serial.println(bmpDepth);
+      
+      if((bmpDepth == 24) && (read32(bmpFile) == 0)) {        // 0 = uncompressed
+
+        goodBmp = true;                                       // Formato BMP suportado -- processo OK!
+        Serial.print(F("    Tamanho Imagem    : "));
+        Serial.print(bmpWidth); Serial.print('x'); Serial.println(bmpHeight);
 
         // BMP rows are padded (if needed) to 4-byte boundary
         rowSize = (bmpWidth * 3 + 3) & ~3;
 
-        // If bmpHeight is negative, image is in top-down order.
-        // This is not canon but has been observed in the wild.
+        // Se bmpHeight for negativo, a imagem está na ordem de cima para baixo(top-down).
+        // Isto não é um padrão mas foi observado.
         if(bmpHeight < 0) {
           bmpHeight = -bmpHeight;
           flip      = false;
         }
 
-        // Crop area to be loaded
+        // Área de corte a ser carregada
+        // x e y - coordenadas inicio imagem - coluna e linha respectivamente
+        // w     - Largura da imagem
+        // h     - altura da imagem
         w = bmpWidth;
         h = bmpHeight;
         if((x+w-1) >= monitor.width())  w = monitor.width()  - x;
         if((y+h-1) >= monitor.height()) h = monitor.height() - y;
 
-        // Set TFT address window to clipped image bounds
+        // Define o endereço da janela TFT para os limites da imagem cortada
         monitor.setAddrWindow(x, y, x+w-1, y+h-1);
 
         for (row=0; row<h; row++) { // For each scanline...
-          // Seek to start of scan line.  It might seem labor-
-          // intensive to be doing this on every line, but this
-          // method covers a lot of gritty details like cropping
-          // and scanline padding.  Also, the seek only takes
-          // place if the file position actually needs to change
-          // (avoids a lot of cluster math in SD library).
-          if(flip) // Bitmap is stored bottom-to-top order (normal BMP)
+
+          // Procure iniciar a linha de varredura. Pode parecer muito intensivo fazer isso em todas as linhas, 
+          // mas esse método abrange muitos detalhes graciosos, como o cultivo e o preenchimento de varredura. 
+          // Além disso, a busca só ocorre se a posição do arquivo realmente precisar mudar 
+          // (evita muitos cálculos matemáticos em cluster na biblioteca SD).          
+          
+          if(flip)                                            // Bitmap está armazenado de baixo para cima (BMP normal)
             pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
-          else     // Bitmap is stored top-to-bottom
+          else                                                // Bitmap está armazenado de cima para baixo
             pos = bmpImageoffset + row * rowSize;
-          if(bmpFile.position() != pos) { // Need seek?
+            
+          if(bmpFile.position() != pos) {                     // Precisa procurar?
             bmpFile.seek(pos);
-            buffidx = sizeof(sdbuffer); // Force buffer reload
+            buffidx = sizeof(sdbuffer);                       // Forçar recarga do buffer
           }
 
           for (col=0; col<w; col++) { // For each column...
@@ -281,7 +288,7 @@ void bmpDraw(char *filename, int x, int y) {
               buffidx = 0; // Set index to beginning
             }
 
-            // Convert pixel from BMP to TFT format
+            // Converte pixel de BMP para formato TFT
             b = sdbuffer[buffidx++];
             g = sdbuffer[buffidx++];
             r = sdbuffer[buffidx++];
@@ -292,7 +299,7 @@ void bmpDraw(char *filename, int x, int y) {
         if(lcdidx > 0) {
           monitor.pushColors(lcdbuffer, lcdidx, first);
         } 
-        Serial.print(F("Loaded in "));
+        Serial.print(F("    Carregado em      : "));
         Serial.print(millis() - startTime);
         Serial.println(" ms");
       } // end goodBmp
@@ -300,12 +307,11 @@ void bmpDraw(char *filename, int x, int y) {
   }
 
   bmpFile.close();
-  if(!goodBmp) Serial.println(F("BMP format not recognized."));
+  if(!goodBmp) Serial.println(F("Forma BMP nao reconhecido......"));
 }
 
-// These read 16- and 32-bit types from the SD card file.
-// BMP data is stored little-endian, Arduino is little-endian too.
-// May need to reverse subscript order if porting elsewhere.
+// Estas funções lêem tipos de 16 e 32 bits a partir do arquivo de cartão SD.
+// Dados BMP são armazenados little-endian, Arduino também é little-endian.
 
 uint16_t read16(File f) {
   uint16_t result;
@@ -322,4 +328,4 @@ uint32_t read32(File f) {
   ((uint8_t *)&result)[3] = f.read(); // MSB
   return result;
 }
-*/
+
