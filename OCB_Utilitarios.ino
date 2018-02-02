@@ -27,12 +27,7 @@ void telaIntroducao()
   
   bmpDraw("logo.bmp", 0, 0);
   
-  //monitor.setCursor(0,5);
-  //monitor.setTextColor(BLUE); 
-  //monitor.setTextSize(2);
-  //monitor.println( "  OnBoard Computer Beetle");  
-
-  //delay(5000);
+ //delay(5000);
 #ifdef DEBUG
   Serial.println("OK!");
 #endif    
@@ -140,7 +135,7 @@ void mostra_relogio()
   int vlin = 5;
   char _daysOfTheWeek[7][12] = {"Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"};
 
-#ifdef DEBUG
+#ifdef DEBUG_DTL
   Serial.print( "RELOGIO   : " );  
   if ( _datahora.day()<10)
      Serial.print("0");  
@@ -184,6 +179,9 @@ void bmpDraw(char *filename, int x, int y) {
   File     bmpFile;
   int      bmpWidth, bmpHeight;                               // W+H in pixels
   uint8_t  bmpDepth;                                          // Bit depth (currently must be 24)
+  uint32_t bmpLenght;      
+  uint32_t bmpCreator;
+  uint32_t bmpLenHeader;
   uint32_t bmpImageoffset;                                    // Start of image data in file
   uint32_t rowSize;                                           // Not always = bmpWidth; may have padding
   uint8_t  sdbuffer[3*BUFFPIXEL];                             // pixel in buffer (R+G+B per pixel)
@@ -200,12 +198,12 @@ void bmpDraw(char *filename, int x, int y) {
 
   if((x >= monitor.width()) || (y >= monitor.height())) return;
 
-#ifdef DEBUG
+#ifdef DEBUG_DTL
   Serial.println();
   Serial.print(F("    Carregando imagem : "));    Serial.println(filename);
 #endif  
   if ((bmpFile = SD.open(filename)) == NULL) {                // Abrir o arquivo solicitado no cartão SD
-#ifdef DEBUG
+#ifdef DEBUG_DTL
     Serial.println(F("    Arquivo nao encontrado !!!!"));
 #endif  
     return;
@@ -213,29 +211,36 @@ void bmpDraw(char *filename, int x, int y) {
 
   // Parse BMP header
   if(read16(bmpFile) == 0x4D42) {                             // Verifica a assintatura de um arquivo BMP
-    Serial.print(F("    Tamanho Arquivo   : ")); 
-    Serial.println(read32(bmpFile));
-    Serial.print(F("    Criador Arquivo   : ")); 
-    Serial.println(read32(bmpFile));                          // Read creator
+    bmpLenght      = read32(bmpFile);
+    bmpCreator     = read32(bmpFile);
     bmpImageoffset = read32(bmpFile);                         // Start of image data
+    bmpLenHeader   = read32(bmpFile);
+    bmpWidth       = read32(bmpFile);                         // Read DIB header
+    bmpHeight      = read32(bmpFile);
+#ifdef DEBUG_DTL
+    Serial.print(F("    Tamanho Arquivo   : ")); 
+    Serial.println(bmpLenght, DEC);
+    Serial.print(F("    Criador Arquivo   : ")); 
+    Serial.println(bmpCreator);                               // Read creator
     Serial.print(F("    Image Offset      : ")); 
     Serial.println(bmpImageoffset, DEC);
     Serial.print(F("    Tamanho Header    : ")); 
-    Serial.println(read32(bmpFile));
-    bmpWidth  = read32(bmpFile);                              // Read DIB header
-    bmpHeight = read32(bmpFile);
+    Serial.println(bmpLenHeader, DEC);
+#endif  
 
     if(read16(bmpFile) == 1) {                                // # planes -- must be '1'
       bmpDepth = read16(bmpFile);                             // bits per pixel
+#ifdef DEBUG_DTL
       Serial.print(F("    Bit Depth         : ")); 
       Serial.println(bmpDepth);
-      
+#endif      
       if((bmpDepth == 24) && (read32(bmpFile) == 0)) {        // 0 = uncompressed
 
         goodBmp = true;                                       // Formato BMP suportado -- processo OK!
+#ifdef DEBUG_DTL        
         Serial.print(F("    Tamanho Imagem    : "));
         Serial.print(bmpWidth); Serial.print('x'); Serial.println(bmpHeight);
-
+#endif
         // BMP rows are padded (if needed) to 4-byte boundary
         rowSize = (bmpWidth * 3 + 3) & ~3;
 
@@ -299,15 +304,21 @@ void bmpDraw(char *filename, int x, int y) {
         if(lcdidx > 0) {
           monitor.pushColors(lcdbuffer, lcdidx, first);
         } 
+#ifdef DEBUG_DTL
         Serial.print(F("    Carregado em      : "));
         Serial.print(millis() - startTime);
         Serial.println(" ms");
+#endif        
       } // end goodBmp
     }
   }
 
   bmpFile.close();
-  if(!goodBmp) Serial.println(F("Forma BMP nao reconhecido......"));
+  if(!goodBmp) {
+#ifdef DEBUG_DTL
+    Serial.println(F("Formato BMP nao reconhecido......"));
+#endif
+  }
 }
 
 // Estas funções lêem tipos de 16 e 32 bits a partir do arquivo de cartão SD.

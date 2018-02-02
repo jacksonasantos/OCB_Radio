@@ -15,18 +15,19 @@ bool iniciaFM()
   else {
 #ifdef DEBUG
     Serial.println("OK!");
+#endif    
+#ifdef DEBUG_DTL
     radio.debugEnable();                                   // Habilita informacoes de debug dos comandos do radio para a porta Serial
-#endif 
     Serial.println("Configurando o Radio...... ");
+#endif 
     radio.setBandFrequency(FIX_BAND, FIX_STATION);         // Define configuracoes de Banda e Frequencia inicial do radio
     radio.setVolume(FIX_VOLUME);                           // Define configuracoes de Volume inicial do radio
     radio.setMono(false);
     radio.setMute(false);
     radio.setSoftMute(false);
     radio.attachReceiveRDS(RDS_process);                   // setup the information chain for RDS data.
-    rds.attachServicenNameCallback(DisplayServiceName);
     encoderFrq.setPosition(FIX_STATION / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Default
-#ifdef DEBUG
+#ifdef DEBUG_DTL
     Serial.print("Debug Radio... ");
     radio.debugRadioInfo();
     Serial.print("Debug Audio... ");
@@ -58,6 +59,11 @@ void executaFM()
 
   while (!digitalRead(btnModoPin))
   {
+    if (digitalRead(btnSetupPin)){                             // Executa o modo Setup
+      executaSetup(); 
+      return;
+    }                         
+    
     _now = millis();
   
     encoderVol.tick();                                         // Verifica o encoder do Volume
@@ -77,11 +83,12 @@ void executaFM()
     Serial.print("Rotary Volume ");  Serial.println(_newPosVol);
 #endif    
       _lastPosVol = _newPosVol;
+      if (radio.getMute()) radio.setMute(!radio.getMute());
       radio.setVolume(_lastPosVol);
       mostraVolume();    
     } 
 
-    encoderFrq.tick();
+    encoderFrq.tick();                                         // Verifica o encoder da Frequencia
     int _newPosFrq = encoderFrq.getPosition() * radio.getFrequencyStep();
 
     if (_newPosFrq < radio.getMinFrequency()) {
@@ -108,15 +115,15 @@ void executaFM()
     
     if (btnMuteState == LOW) {                                // Verifica Botão de Mude      
       radio.setMute(!radio.getMute());
-      delay(500);
+      delay(100);
     }
-    else if (btnPrevState == HIGH){                           // Verifica Seek Avançar
-      radio.seekDown(false);
+    else if (btnPrevState == HIGH){                           // Verifica Seek Retroceder
+      radio.seekDown(true);
       delay(10);
       encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
     }
-    else if (btnNextState == HIGH){                          // Verifica Seek Retroceder
-      radio.seekUp(false);
+    else if (btnNextState == HIGH){                          // Verifica Seek Avançar
+      radio.seekUp(true);
       delay(10);
       encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
     }
@@ -125,17 +132,17 @@ void executaFM()
       mostra_relogio();
       
       radio.checkRDS(rdsBuffer, 500);
-#ifdef DEBUG
-    Serial.print("RDS heard:");
+#ifdef DEBUG_DTL
+    Serial.print("RDS heard: ");
     Serial.println(rdsBuffer);      
 #endif
-  monitor.setTextSize(1);
-  if (rdsAnter[0] != rdsBuffer[0]) {
-  monitor.fillRect( 35, 135, monitor.width()-30, 15, BLACK);
+      monitor.setTextSize(1);
+      if (rdsAnter[0] != rdsBuffer[0]) {
+        monitor.fillRect( 35, 135, monitor.width()-30, 15, BLACK);
         rdsAnter[0] = rdsBuffer[0];
       }
-  imprimeTexto(rdsBuffer,"C",135);
-  monitor.setTextSize(2);
+      imprimeTexto(rdsBuffer,"C",135);
+      monitor.setTextSize(2);
 
       radio.getRadioInfo(&radioInfo);
       radio.getAudioInfo(&audioInfo);
@@ -160,32 +167,6 @@ void executaFM()
 void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) {
   rds.processData(block1, block2, block3, block4);
 }
-////////////////////////////////////////////////////////////////
-/// Update the ServiceName text on the LCD display when in RDS mode.
-void DisplayServiceName(char *name) 
-{
-  bool found = false;
-
-  for (uint8_t n = 0; n < 8; n++)
-    if (name[n] != ' ') found = true;
-
-  if (found) {
-#ifdef DEBUG
-    Serial.print("RDS TEX :");
-    Serial.print(name);
-    Serial.println("---------------------------------------");
-    
-    Serial.print("Debug Radio... ");
-    radio.debugRadioInfo();
-    Serial.print("Debug Audio... ");
-    radio.debugAudioInfo();    
-#endif
-    monitor.setTextSize(1);
-    monitor.fillRect( 30, 135, monitor.width()-30, 15, BLACK);
-    imprimeTexto(name,"C",135);
-  }
-} 
-
 ////////////////////////////////////////////////////////////////
 void mostraFrequencia(int16_t _lin)
 {
@@ -222,7 +203,7 @@ void mostraFrequencia(int16_t _lin)
 ////////////////////////////////////////////////////////////////
 void mostraVolume()
 {
-#ifdef DEBUG
+#ifdef DEBUG_DTL
   Serial.print(" Volume  : ");Serial.println(radio.getVolume());
 #endif
   mostraTermometro("Vol", radio.getVolume(), radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, monitor.height()-43, 20 );
@@ -230,7 +211,7 @@ void mostraVolume()
 ////////////////////////////////////////////////////////////////
 void mostraSinal(int16_t _col, int16_t _lin, int16_t _tam, int16_t _forma)
 {
-#ifdef DEBUG
+#ifdef DEBUG_DTL
   Serial.print(" Sinal   : ");Serial.println(radioInfo.snr);
 #endif
 

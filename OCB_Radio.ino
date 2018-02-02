@@ -5,6 +5,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 
 #define DEBUG                                                // Flag de debug (Se habilitado. Deixa o sistemas mais lento)
+#define DEBUG_DTL                                            // Flag de detalhamento do debug de alguns componentes
 
                                                              // Inclusao de Biblioteca utilizadas
 #include <Arduino.h>                                            // Biblioteca Padrao Arduino
@@ -17,34 +18,37 @@
 #include <RDSParser.h>                                          // Controlar o conteudo do RDS do radio
 #include <RotaryEncoder.h>                                      // Controlar os Encoder´s
 #include <DFRobotDFPlayerMini.h>                                // Controlar Mini Player MP3 - SD
-#include <SoftwareSerial.h>                                     // Controlar a Interface Serial via Software
 #include <SD.h>                                                 // Controlar o leitor de SD do TFT
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
+int                       btnModoState   = 1;                   // Variavel de controle de modo de operacao (1-Radio FM / 2-SD / 3-USB)
+int                       btnMuteState   = 0;                   // Variavel de controle do Mude no Radio | MP3 | USB
 int                       btnPrevState   = 0;                   // Variavel de controle do Retrocesso; no Seek no Radio e Anterior no MP3 | USB
 int                       btnNextState   = 0;                   // Variavel de controle do Avanço; no Seek no Radio e Proximo no MP3 | USB
-int                       btnMuteState   = 0;                   // Variavel de controle do Mude no Radio | MP3 | USB
-int                       btnModoState   = 2;                   // Variavel de controle de modo de operacao (1-Setup / 2-Radio FM / 3-SD / 4-USB)
+int                       btnOkState     = 0;                   // Variavel de controle do OK
+int                       btnSetupState  = 0;                   // Variavel de controle do Setup
 float                     _colAnte       = 0;                   // Variavel de controle da coluna anterior utilizada no display da Frequencia no Radio
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis                                                               
-const int                 vg_PlayPin     = 3;                      // 3              - PWM         - Controle de status do Play do MP3 (BUSY)
-const int                 vg_Rele1Pin    = 4;                      // 4              - PWM         - Controle de status do Rele1 para som do Radio
-const int                 vg_Rele2Pin    = 5;                      // 5              - PWM         - Controle de status do Rele2 para som do MP3
+const int                 vg_Rele1Pin    = 2;                      // 2              - PWM         - Controle de status do Rele1 para som do Radio
+const int                 vg_Rele2Pin    = 3;                      // 3              - PWM         - Controle de status do Rele2 para som do MP3
+const int                 vg_PlayPin     = 4;                      // 4              - PWM         - Controle de status do Play do MP3 (BUSY)
+const int                 btnModoPin     = 5;                      // 5              - PWM         - Botão Modo
 const int                 btnPrevPin     = 6;                      // 6              - PWM         - Botão Prev
 const int                 btnNextPin     = 7;                      // 7              - PWM         - Botão Next
 const int                 btnMutePin     = 8;                      // 8              - PWM         - Botão Mute
-const int                 btnModoPin     = 9;                      // 9              - PWM         - Botão Modo
+const int                 btnOkPin       = 11;                     // 11             - PWM         - Botão OK
+const int                 btnSetupPin    = 30;                     // 30             - Digital     - Botão Setup o OCB
 const int                 vg_chipSD      = 53;                     // 53             - Digital     - Controle Pino Iniciação do SD
 
                                                                 // Definicao Objetos
 RTC_DS3231                relogio;                                 // I2C(SCL1/SDA1) - Digital     - Modulo RTC          ligado as portas I2C                   
-RotaryEncoder             encoderVol(10, 11);                      // 10-11          - PWM         - Rotary-Encoder Volume
-RotaryEncoder             encoderVolMP3(10, 11);                   //                - copia       - Rotary-Encoder Volume
+RotaryEncoder             encoderVol(9, 10);                       // 9-10           - PWM         - Rotary-Encoder Volume
+RotaryEncoder             encoderVolMP3(9, 10);                    //                - copia       - Rotary-Encoder Volume
 RotaryEncoder             encoderFrq(12, 13);                      // 12-13          - PWM         - Rotary-Encoder Frequencia
 RotaryEncoder             encoderVlr(12, 13);                      //                - copia       - Rotary-Encoder usando no Setup
-SoftwareSerial            mySoftwareSerial(17, 16);                // 17-16          - Digital     - Modulo MP3          ligado as portas RX2, TX2 na SoftSerial2
+//                        Serial2(17, 16);                         // 17-16          - Digital     - Modulo MP3          ligado as portas RX2, TX2 do Serial2
 SI4703                    radio;                                   // 20-21          - Digital     - Modulo SI4703       ligado as portas I2C (SCL/SDA) do Mega 
                                                                    // 22-29          - Digital     - Modulo TFT LCD      ligado as portas D0-D7
 Adafruit_TFTLCD           monitor(40, 38, 39, 42, 41);             // 38-42          - Digital     - Modulo LCD          ligado as portas de controle RD,WS,RS,CS,RST
@@ -57,7 +61,6 @@ RADIO_INFO                radioInfo;                         // Objeto de contro
 #define                   FIX_BAND           RADIO_BAND_FM   // Definição Banda inicial de sintonia do radio como FM
 #define                   FIX_STATION        10230           // Definição Estacao de preferencia de FM
 #define                   FIX_VOLUME         6               // Definição Volume inicial
-
 
 // Definição de nomes legiveis das Cores para valores de 16-bit
 #define BLACK            0x0000      /*   0,   0,   0 */
@@ -88,24 +91,25 @@ void setup()
   Serial.begin(115200);                                  // Inicializa Serial caso seja configurado para DEBUG
 #endif
 
-  pinMode(btnPrevPin,INPUT);                             // Configura os Botoes de Controle
-  pinMode(btnNextPin,INPUT);                             
-  pinMode(btnMutePin,INPUT);                             
-  pinMode(btnModoPin,INPUT);
+  pinMode(btnModoPin ,INPUT);
+  pinMode(btnPrevPin ,INPUT);                            // Configura os Botoes de Controle
+  pinMode(btnNextPin ,INPUT);                             
+  pinMode(btnMutePin ,INPUT_PULLUP);                             
+  pinMode(btnOkPin   ,INPUT_PULLUP);                             
+  pinMode(btnSetupPin,INPUT);                             
   pinMode(vg_Rele1Pin,OUTPUT);
   pinMode(vg_Rele2Pin,OUTPUT);
-  pinMode(vg_PlayPin,INPUT_PULLUP); 
-  pinMode(SS, OUTPUT);
+  pinMode(vg_PlayPin ,INPUT_PULLUP); 
+  pinMode(vg_chipSD  ,OUTPUT);
   
   digitalWrite(vg_PlayPin,HIGH); 
-  digitalWrite(10,HIGH); 
-  digitalWrite(11,HIGH); 
 
 //------------------------------------------------
+// Inicializa o Chip SD
 #ifdef DEBUG
   Serial.print("Inicializando Chip SD..... ");             
 #endif  
-  if (!SD.begin(vg_chipSD)) {                            // Inicializa o Chip SD do TFT
+  if (!SD.begin(vg_chipSD)) {                            
 #ifdef DEBUG 
     Serial.println("Falhou!");
 #endif    
@@ -117,13 +121,15 @@ void setup()
 #endif  
   }
 //------------------------------------------------
-  iniciaTFT();                                           // Inicializa o Monitor
+// Inicializa o Monitor
+  iniciaTFT();                                           
   telaIntroducao();                                      // Apresenta Abertura
 //------------------------------------------------
+ // Inicializa o Relogio
 #ifdef DEBUG
   Serial.print("Inicializando Relógio..... ");             
 #endif  
-  if (!relogio.begin()) {                                // Inicializa o Relogio
+  if (!relogio.begin()) {                               
 #ifdef DEBUG 
     Serial.println("Falhou!");
 #endif    
@@ -135,10 +141,11 @@ void setup()
 #endif  
   }
 //------------------------------------------------
+// Inicializa o MP3 Player (Mini SD)
 #ifdef DEBUG
   Serial.print("Inicializando MP3 Player.. ");
 #endif  
-  if (!iniciaMP3(DFPLAYER_DEVICE_SD)){                   // Inicializa o MP3 Player (Mini SD)
+  if (!iniciaMP3()){                   
 #ifdef DEBUG
     Serial.println("Falhou!");
 #endif  
@@ -150,7 +157,8 @@ void setup()
 #endif  
   }
 //------------------------------------------------
-  iniciaFM();                                            // Inicializa o Radio FM
+// Inicializa o Radio FM
+  iniciaFM();                                            
 
   preparaTFT();                                          // Prepara o Monitor com a configuração inicial
   limpaArea();                                           // Limpa a Área util de deixa fundo preto
@@ -164,36 +172,33 @@ void loop()
 { 
   if (digitalRead(btnModoPin) ) {                        // Verifica se o botão dp Modo de Execução foi acionado
     btnModoState++;
-    if (btnModoState > 4) {btnModoState = 1;}
+    if (btnModoState > 3) {btnModoState = 1;}
     delay(50);
 #ifdef DEBUG
     Serial.print("MODO: ");   Serial.println(btnModoState);
 #endif  
   }      
 
-  if( btnModoState == 1 || btnModoState == 2 ) {         // Configura os Rele para direcionarmento da saida dos alto falantes (1 e 2 modos SETUP e FM)
+  if( btnModoState == 1 ) {                              // Configura os Rele para direcionarmento da saida dos alto falantes (1 modo FM)
     digitalWrite(vg_Rele1Pin, LOW); 
     digitalWrite(vg_Rele2Pin, LOW);   
   }
-  else {  
+  else {                                                 // Configura os Rele para direcionarmento da saida dos alto falantes (2 e 3 modos SD e USB)
     digitalWrite(vg_Rele1Pin, HIGH); 
     digitalWrite(vg_Rele2Pin, HIGH); 
   }
 
   monitor.setTextSize(2);
   monitor.setTextColor(WHITE, BLUE);
-  if (btnModoState == 1)                                 // Executa o modo Setup
-     { imprimeTexto("Setup","E",5);
-       executaSetup(); }                         
-  else if(btnModoState == 2)                             // Executa o modo Radio FM
+  if(btnModoState == 1)                                  // Executa o modo Radio FM
      { radio.setMute(0);
        imprimeTexto("Radio","E",5);
        executaFM(); }
-  else if(btnModoState == 3)                             // Executa o modo MP3 no SD
+  else if(btnModoState == 2)                             // Executa o modo MP3 no SD
      { radio.setMute(1);
        imprimeTexto("SD   ","E",5);
        executaMp3(DFPLAYER_DEVICE_SD); } 
-  else if(btnModoState == 4)                             // Executa o modo MP3 no USB
+  else if(btnModoState == 3)                             // Executa o modo MP3 no USB
      { radio.setMute(1);
        imprimeTexto("USB  ","E",5);
        executaMp3(DFPLAYER_DEVICE_U_DISK); }

@@ -15,13 +15,17 @@ void executaSetup()
   _label[2] = "/";     _campos[2][1] = _datahora.year();   _campos[2][2] = 200; _campos[2][3] = 45; _campos[2][4] = 0; _campos[2][5] = 2099;
   _label[3] = "HORA";  _campos[3][1] = _datahora.hour();   _campos[3][2] = 110; _campos[3][3] = 65; _campos[3][4] = 0; _campos[3][5] = 23;
   _label[4] = ":";     _campos[4][1] = _datahora.minute(); _campos[4][2] = 155; _campos[4][3] = 65; _campos[4][4] = 0; _campos[4][5] = 59;
-  
-  monitor.setTextColor(WHITE,BLACK);
+
+  limpaArea();
+
   monitor.setTextSize(2);
-  monitor.setCursor(_campos[0][2]-70,_campos[0][3]); monitor.print(_label[0]); 
+  monitor.setTextColor(WHITE, BLUE);
+  imprimeTexto("Setup","E",5);
+  monitor.setTextColor(WHITE, BLACK);
+  monitor.setCursor(_campos[0][2]-60,_campos[0][3]); monitor.print(_label[0]); 
   monitor.setCursor(_campos[1][2]-15,_campos[1][3]); monitor.print(_label[1]); 
-  monitor.setCursor(_campos[2][2]-20,_campos[2][3]); monitor.print(_label[2]); 
-  monitor.setCursor(_campos[3][2]-70,_campos[3][3]); monitor.print(_label[3]); 
+  monitor.setCursor(_campos[2][2]-15,_campos[2][3]); monitor.print(_label[2]); 
+  monitor.setCursor(_campos[3][2]-60,_campos[3][3]); monitor.print(_label[3]); 
   monitor.setCursor(_campos[4][2]-15,_campos[4][3]); monitor.print(_label[4]); 
   
   for (byte i=0; i<_qtdeCampos; i++) { // Mostra Campos
@@ -34,7 +38,7 @@ void executaSetup()
      int _new_var = -1;
      encoderVlr.setPosition(_var);        // Define Encoder com o Valor Atual do Campo
       
-     while (digitalRead(btnMutePin)) {
+     while (digitalRead(btnOkPin)) {
    
         if (digitalRead(btnModoPin)) return;
         
@@ -74,6 +78,5 @@ void executaSetup()
   }
   
   mostra_relogio();
-  btnModoState = 2;                       				// Volta para o Radio
 }
 
