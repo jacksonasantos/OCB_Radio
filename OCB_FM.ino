@@ -67,7 +67,6 @@ void executaFM()
     _now = millis();
   
     encoderVol.tick();                                         // Verifica o encoder do Volume
-
     int _newPosVol = encoderVol.getPosition() * ROTARYSTEPS;   // captura a posição fisica atual e calcula a posição lógica
 
     if (_newPosVol < ROTARYMIN) {
@@ -156,9 +155,7 @@ void executaFM()
       imprimeTexto((radioInfo.tuned     ? "TUNED " : "      "),"D",85);
       imprimeTexto((radioInfo.stereo    ? "STEREO" : "MONO  "),"D",100);
       monitor.setTextSize(2);
-      mostraSinal( 60, 120, 40, 2);     // usar 3o parametro com valor PAR | 4o param (1)=Triangulo (2)=Radar
-      mostraFrequencia(100);
-      mostraVolume();    
+      mostraSinal( 60, 120, 40, 2);                    // usar 3o parametro com valor PAR | 4o param (1)=Triangulo (2)=Radar
       _nextFreqTime = _now + 1000;
     }
   }
@@ -178,8 +175,8 @@ void mostraFrequencia(int16_t _lin)
   monitor.setTextColor(WHITE,BLACK);  
   monitor.setTextSize(3);
   imprimeTexto(s,"C",_lin);                            // Mostra a frequencia sintonizada em numeros formatada
-  if ( radioInfo.tuned )                               // Mostra simbolo de radio sintonizado - bolinha verde
-     monitor.fillCircle(75, _lin, 5, GREEN);
+
+  mostraSinal( 60, 120, 40, 2 );                       // usar 3o parametro com valor PAR | 4o param (1)=Triangulo (2)=Radar
      
   if (_colAnte > 0) {
      monitor.drawFastVLine(_colAnte  , _linMax-83, 40, BLACK);

@@ -9,16 +9,16 @@
 
                                                              // Inclusao de Biblioteca utilizadas
 #include <Arduino.h>                                            // Biblioteca Padrao Arduino
-#include <RTClib.h>                                             // Driver Relogio - Tiny RTC I2C
+#include <RTClib.h>                                             // Bibliotera Relogio - Tiny RTC I2C
 #include <Adafruit_GFX.h>                                       // Biblioteca Grafica Principal
 #include <Adafruit_TFTLCD.h>                                    // Biblioteca Configuração Display LCD TFT
-#include <SPI.h>                                                // Habilita a comunicação com devices que usam o barramento SPI - Serial Peripheral Interface
-#include <radio.h>                                              // Radio FM
-#include <si4703.h>                                             // Controlador Radio
-#include <RDSParser.h>                                          // Controlar o conteudo do RDS do radio
-#include <RotaryEncoder.h>                                      // Controlar os Encoder´s
-#include <DFRobotDFPlayerMini.h>                                // Controlar Mini Player MP3 - SD
-#include <SD.h>                                                 // Controlar o leitor de SD do TFT
+#include <SPI.h>                                                // Biblioteca que habilita a comunicação com devices que usam o barramento SPI - Serial Peripheral Interface
+#include <radio.h>                                              // Biblioteca Customizada p/ Radio FM
+#include <si4703.h>                                             // Biblioteca Controlador Radio
+#include <RDSParser.h>                                          // Biblioteca Controlar o conteudo do RDS do radio
+#include <RotaryEncoder.h>                                      // Biblioteca Encoder´s
+#include <DFRobotDFPlayerMini.h>                                // Biblioteca Mini Player MP3 - SD
+#include <SD.h>                                                 // Biblioteca leitor de SD do TFT
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
 int                       btnModoState   = 1;                   // Variavel de controle de modo de operacao (1-Radio FM / 2-SD / 3-USB)
@@ -45,7 +45,7 @@ const int                 vg_chipSD      = 53;                     // 53        
                                                                 // Definicao Objetos
 RTC_DS3231                relogio;                                 // I2C(SCL1/SDA1) - Digital     - Modulo RTC          ligado as portas I2C                   
 RotaryEncoder             encoderVol(9, 10);                       // 9-10           - PWM         - Rotary-Encoder Volume
-RotaryEncoder             encoderVolMP3(9, 10);                    //                - copia       - Rotary-Encoder Volume
+RotaryEncoder             encoderVolMP3(9, 10);                    //                - copia       - Rotary-Encoder Volume do MP3
 RotaryEncoder             encoderFrq(12, 13);                      // 12-13          - PWM         - Rotary-Encoder Frequencia
 RotaryEncoder             encoderVlr(12, 13);                      //                - copia       - Rotary-Encoder usando no Setup
 //                        Serial2(17, 16);                         // 17-16          - Digital     - Modulo MP3          ligado as portas RX2, TX2 do Serial2
