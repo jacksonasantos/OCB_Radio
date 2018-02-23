@@ -4,12 +4,12 @@
 bool iniciaMP3()
 {
   Serial2.begin(9600);
-  if (!mp3player.begin(Serial2, false)) {                 // Usa softwareSerial para comunicacar com player - false para desabilitar ACK para funcionar o USB
+  if (!mp3player.begin(Serial2, true)) {                 // Usa softwareSerial para comunicacar com player - false para desabilitar ACK 
     return -1;
   }
   else {
     mp3player.setTimeOut(500);                          	// Define o time out (500ms) da comunicacao serial
-    mp3player.outputSetting(false, FIX_VOLUME);          	// output setting, enable the output and set the gain to 15
+    mp3player.outputSetting(false, FIX_VOLUME);          	// output setting, enable the output and set the gain
     mp3player.enableDAC();                                // Enable On-chip DAC
     mp3player.volume(FIX_VOLUME);                         // Define o volume inicial
     mp3player.EQ(DFPLAYER_EQ_NORMAL);                     // Define a equalizacao do som

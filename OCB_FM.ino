@@ -114,7 +114,7 @@ void executaFM()
     
     if (btnMuteState == LOW) {                                // Verifica Botão de Mude      
       radio.setMute(!radio.getMute());
-      delay(100);
+      delay(200);
     }
     else if (btnPrevState == HIGH){                           // Verifica Seek Retroceder
       radio.seekDown(true);

@@ -19,6 +19,8 @@
 #include <RotaryEncoder.h>                                      // Biblioteca Encoder´s
 #include <DFRobotDFPlayerMini.h>                                // Biblioteca Mini Player MP3 - SD
 #include <SD.h>                                                 // Biblioteca leitor de SD do TFT
+#include <Wire.h>                                               // Biblioteca conexão I2C para PT2314 - Processador de Audio
+#include <pt2314.h>                                             // Biblioteca Processador de Audio IC com: 4 entradas, 1 Saída Estéreo, Volume, Bass, Treble, e Balance
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
 int                       btnModoState   = 1;                   // Variavel de controle de modo de operacao (1-Radio FM / 2-SD / 3-USB)
@@ -31,8 +33,6 @@ float                     _colAnte       = 0;                   // Variavel de c
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis                                                               
-const int                 vg_Rele1Pin    = 2;                      // 2              - PWM         - Controle de status do Rele1 para som do Radio
-const int                 vg_Rele2Pin    = 3;                      // 3              - PWM         - Controle de status do Rele2 para som do MP3
 const int                 vg_PlayPin     = 4;                      // 4              - PWM         - Controle de status do Play do MP3 (BUSY)
 const int                 btnModoPin     = 5;                      // 5              - PWM         - Botão Modo
 const int                 btnPrevPin     = 6;                      // 6              - PWM         - Botão Prev
@@ -57,10 +57,15 @@ DFRobotDFPlayerMini       mp3player;                         // Objeto de contro
 RDSParser                 rds;                               // Objeto de controle do Radio - Informacoes RDS
 AUDIO_INFO                audioInfo;                         // Objeto de controle do Radio - Informacoes Audio
 RADIO_INFO                radioInfo;                         // Objeto de controle do Radio - Informacoes Radio
+PT2314                    audioProcessor;                    // Objeto de controle do Porocessador de Audio
 
 #define                   FIX_BAND           RADIO_BAND_FM   // Definição Banda inicial de sintonia do radio como FM
 #define                   FIX_STATION        10230           // Definição Estacao de preferencia de FM
 #define                   FIX_VOLUME         6               // Definição Volume inicial
+#define                   MIN_VOLUME_ENC     0               // Displayed / encoder stops
+#define                   MAX_VOLUME_ENC     15              // Displayed / encoder stops
+#define                   MIN_VOLUME_PT2314  24              // Sent to the PT2314 (0..63)
+#define                   MAX_VOLUME_PT2314  63              // Sent to the PT2314 (0..63)
 
 // Definição de nomes legiveis das Cores para valores de 16-bit
 #define BLACK            0x0000      /*   0,   0,   0 */
@@ -96,9 +101,7 @@ void setup()
   pinMode(btnNextPin ,INPUT);                             
   pinMode(btnMutePin ,INPUT_PULLUP);                             
   pinMode(btnOkPin   ,INPUT_PULLUP);                             
-  pinMode(btnSetupPin,INPUT);                             
-  pinMode(vg_Rele1Pin,OUTPUT);
-  pinMode(vg_Rele2Pin,OUTPUT);
+  pinMode(btnSetupPin,INPUT);    
   pinMode(vg_PlayPin ,INPUT_PULLUP); 
   pinMode(vg_chipSD  ,OUTPUT);
   
@@ -160,6 +163,20 @@ void setup()
 // Inicializa o Radio FM
   iniciaFM();                                            
 
+//------------------------------------------------
+// Inicializa o Processador de Audio
+#ifdef DEBUG
+  Serial.print("Inicializando Processador de Audio.. ");
+#endif  
+  audioProcessor.setVolume(map(FIX_VOLUME, MIN_VOLUME_ENC, MAX_VOLUME_ENC, MIN_VOLUME_PT2314, MAX_VOLUME_PT2314));
+  audioProcessor.setBass(0);
+  audioProcessor.setTreble(0);
+  audioProcessor.setSource(0, false, 3);
+  audioProcessor.setBalance(0);
+#ifdef DEBUG
+     Serial.println("OK!");
+#endif  
+    
   preparaTFT();                                          // Prepara o Monitor com a configuração inicial
   limpaArea();                                           // Limpa a Área util de deixa fundo preto
 
@@ -179,28 +196,22 @@ void loop()
 #endif  
   }      
 
-  if( btnModoState == 1 ) {                              // Configura os Rele para direcionarmento da saida dos alto falantes (1 modo FM)
-    digitalWrite(vg_Rele1Pin, LOW); 
-    digitalWrite(vg_Rele2Pin, LOW);   
-  }
-  else {                                                 // Configura os Rele para direcionarmento da saida dos alto falantes (2 e 3 modos SD e USB)
-    digitalWrite(vg_Rele1Pin, HIGH); 
-    digitalWrite(vg_Rele2Pin, HIGH); 
-  }
-
   monitor.setTextSize(2);
   monitor.setTextColor(WHITE, BLUE);
   if(btnModoState == 1)                                  // Executa o modo Radio FM
      { radio.setMute(0);
        imprimeTexto("Radio","E",5);
+       audioProcessor.setSource(0, false, 3);
        executaFM(); }
   else if(btnModoState == 2)                             // Executa o modo MP3 no SD
      { radio.setMute(1);
        imprimeTexto("SD   ","E",5);
+       audioProcessor.setSource(1, false, 3);
        executaMp3(DFPLAYER_DEVICE_SD); } 
   else if(btnModoState == 3)                             // Executa o modo MP3 no USB
      { radio.setMute(1);
        imprimeTexto("USB  ","E",5);
+       audioProcessor.setSource(1, false, 3);
        executaMp3(DFPLAYER_DEVICE_U_DISK); }
   
   limpaArea();

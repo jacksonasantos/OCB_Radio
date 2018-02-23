@@ -154,7 +154,7 @@ void mostra_relogio()
 #endif
 
   // Mostra a data 
-  monitor.setFont();
+  //monitor.setFont();
   monitor.setTextSize(2);
   monitor.setTextColor(WHITE,BLUE);  
   monitor.setCursor(vcol, vlin);
