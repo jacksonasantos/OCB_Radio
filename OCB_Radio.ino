@@ -21,15 +21,20 @@
 #include <SD.h>                                                 // Biblioteca leitor de SD do TFT
 #include <Wire.h>                                               // Biblioteca conexão I2C para PT2314 - Processador de Audio
 #include <pt2314.h>                                             // Biblioteca Processador de Audio IC com: 4 entradas, 1 Saída Estéreo, Volume, Bass, Treble, e Balance
+#include <EEPROM.h>             // Load and Save settings
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
-int                       btnModoState   = 1;                   // Variavel de controle de modo de operacao (1-Radio FM / 2-SD / 3-USB)
+int                       vg_Volume      = 6;
 int                       btnMuteState   = 0;                   // Variavel de controle do Mude no Radio | MP3 | USB
 int                       btnPrevState   = 0;                   // Variavel de controle do Retrocesso; no Seek no Radio e Anterior no MP3 | USB
 int                       btnNextState   = 0;                   // Variavel de controle do Avanço; no Seek no Radio e Proximo no MP3 | USB
 int                       btnOkState     = 0;                   // Variavel de controle do OK
 int                       btnSetupState  = 0;                   // Variavel de controle do Setup
+int                       btnPreset1State= 0;                   // Variavel de controle do Preset 1
+int                       btnPreset2State= 0;                   // Variavel de controle do Preset 2
+int                       btnPreset3State= 0;                   // Variavel de controle do Preset 3
 float                     _colAnte       = 0;                   // Variavel de controle da coluna anterior utilizada no display da Frequencia no Radio
+char                      *modos[3]      = {"Radio", "SD   ", "USB  "};
 
                                                              // Configuracao das Portas 
                                                                 // Definicao Variaveis                                                               
@@ -40,6 +45,9 @@ const int                 btnNextPin     = 7;                      // 7         
 const int                 btnMutePin     = 8;                      // 8              - PWM         - Botão Mute
 const int                 btnOkPin       = 11;                     // 11             - PWM         - Botão OK
 const int                 btnSetupPin    = 30;                     // 30             - Digital     - Botão Setup o OCB
+const int                 btnPreset1     = 31;                     // 31             - Digital     - Botão Preset1
+const int                 btnPreset2     = 32;                     // 32             - Digital     - Botão Preset2
+const int                 btnPreset3     = 33;                     // 33             - Digital     - Botão Preset3
 const int                 vg_chipSD      = 53;                     // 53             - Digital     - Controle Pino Iniciação do SD
 
                                                                 // Definicao Objetos
@@ -57,7 +65,7 @@ DFRobotDFPlayerMini       mp3player;                         // Objeto de contro
 RDSParser                 rds;                               // Objeto de controle do Radio - Informacoes RDS
 AUDIO_INFO                audioInfo;                         // Objeto de controle do Radio - Informacoes Audio
 RADIO_INFO                radioInfo;                         // Objeto de controle do Radio - Informacoes Radio
-PT2314                    audioProcessor;                    // Objeto de controle do Porocessador de Audio
+PT2314                    audioProcessor;                    // Objeto de controle do Processador de Audio
 
 #define                   FIX_BAND           RADIO_BAND_FM   // Definição Banda inicial de sintonia do radio como FM
 #define                   FIX_STATION        10230           // Definição Estacao de preferencia de FM
@@ -66,6 +74,10 @@ PT2314                    audioProcessor;                    // Objeto de contro
 #define                   MAX_VOLUME_ENC     15              // Displayed / encoder stops
 #define                   MIN_VOLUME_PT2314  24              // Sent to the PT2314 (0..63)
 #define                   MAX_VOLUME_PT2314  63              // Sent to the PT2314 (0..63)
+
+#define                   PRESETS            3               // Definição da quantidade de Faixas gravadas
+#define                   SETTINGS_ADDRESS   64              // EEPROM Addresses
+#define                   SETTINGS_ID_STRING "OCB 1.0"       // Identificação do Produto/Versão
 
 // Definição de nomes legiveis das Cores para valores de 16-bit
 #define BLACK            0x0000      /*   0,   0,   0 */
@@ -87,6 +99,58 @@ PT2314                    audioProcessor;                    // Objeto de contro
 #define ORANGE           0xFD20      /* 255, 165,   0 */
 #define GREENYELLOW      0xAFE5      /* 173, 255,  47 */ 
 
+////////////////
+// Structures //
+////////////////
+typedef struct SettingsType {
+    char        id[8];
+    byte        source;
+    signed char currentPreset;
+    int         presetFrequency[PRESETS]; 
+    int         currentFrequency;
+    int         currentVolume;
+    int         bass;
+    int         treble;
+    int         balance;
+};
+SettingsType              settings;                          // Objetp de controle das variaveis a sere armazenadas na EEPROM
+
+/**************************
+ * Prototipos das Funcoes *
+ **************************/
+// OCB FM
+bool iniciaFM         ();
+void executaFM        ();
+void RDS_process      (uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) ;
+void mostraFrequencia (int16_t _lin);
+void mostraVolume     ();
+void mostraSinal      (int16_t _col, int16_t _lin, int16_t _tam, int16_t _forma);
+
+// OCB MP3
+bool iniciaMP3        ();
+void executaMp3       (uint8_t device);
+void mostraEQMP3      ();
+void mostraVolumeMP3  ();
+void printDetail      (uint8_t type, int value, int p_posmsg);
+
+// OCB Setup
+void executaSetup     ();
+void saveSettings     ();
+void loadSettings     ();
+
+// OCB Utilitarios
+void iniciaTFT        (); 
+void telaIntroducao   (); 
+void preparaTFT       ();
+void imprimeTexto     (String pTexto, String pAlinhamento, int pLinha);
+void limpaArea        ();
+void mostraTermometro (String p_titulo, int16_t p_valor, int16_t p_tamanho, int16_t p_referencia, int16_t p_col_baixo, int16_t p_lin_baixo, int16_t p_largura );
+void mostra_relogio   ();
+void bmpDraw          (char *filename, int x, int y);
+uint16_t read16       (File f);
+uint32_t read32       (File f);
+
+
 ///////////
 // Setup //
 ///////////
@@ -96,12 +160,19 @@ void setup()
   Serial.begin(115200);                                  // Inicializa Serial caso seja configurado para DEBUG
 #endif
 
+  loadSettings();                                        // Carrega as configurações iniciais
+  settings.source = 0;                                   // Define Radio como inicial
+  saveSettings();
+
   pinMode(btnModoPin ,INPUT);
   pinMode(btnPrevPin ,INPUT);                            // Configura os Botoes de Controle
   pinMode(btnNextPin ,INPUT);                             
   pinMode(btnMutePin ,INPUT_PULLUP);                             
   pinMode(btnOkPin   ,INPUT_PULLUP);                             
   pinMode(btnSetupPin,INPUT);    
+  pinMode(btnPreset1 ,INPUT);    
+  pinMode(btnPreset2 ,INPUT);    
+  pinMode(btnPreset3 ,INPUT);    
   pinMode(vg_PlayPin ,INPUT_PULLUP); 
   pinMode(vg_chipSD  ,OUTPUT);
   
@@ -168,11 +239,11 @@ void setup()
 #ifdef DEBUG
   Serial.print("Inicializando Processador de Audio.. ");
 #endif  
-  audioProcessor.setVolume(map(FIX_VOLUME, MIN_VOLUME_ENC, MAX_VOLUME_ENC, MIN_VOLUME_PT2314, MAX_VOLUME_PT2314));
-  audioProcessor.setBass(0);
-  audioProcessor.setTreble(0);
+  audioProcessor.setVolume(map(settings.currentVolume, MIN_VOLUME_ENC, MAX_VOLUME_ENC, MIN_VOLUME_PT2314, MAX_VOLUME_PT2314));
+  audioProcessor.setBass(settings.bass);
+  audioProcessor.setTreble(settings.treble);
   audioProcessor.setSource(0, false, 3);
-  audioProcessor.setBalance(0);
+  audioProcessor.setBalance(settings.balance);
 #ifdef DEBUG
      Serial.println("OK!");
 #endif  
@@ -188,29 +259,29 @@ void setup()
 void loop() 
 { 
   if (digitalRead(btnModoPin) ) {                        // Verifica se o botão dp Modo de Execução foi acionado
-    btnModoState++;
-    if (btnModoState > 3) {btnModoState = 1;}
+    settings.source++;
+    if (settings.source > 2) {settings.source = 0;}
+    saveSettings();
     delay(50);
 #ifdef DEBUG
-    Serial.print("MODO: ");   Serial.println(btnModoState);
+    Serial.print("MODO: ");   Serial.println(settings.source);
 #endif  
   }      
 
   monitor.setTextSize(2);
   monitor.setTextColor(WHITE, BLUE);
-  if(btnModoState == 1)                                  // Executa o modo Radio FM
+  imprimeTexto(modos[settings.source],"E",5);
+  
+  if(settings.source == 0)                                  // Executa o modo Radio FM
      { radio.setMute(0);
-       imprimeTexto("Radio","E",5);
        audioProcessor.setSource(0, false, 3);
        executaFM(); }
-  else if(btnModoState == 2)                             // Executa o modo MP3 no SD
+  else if(settings.source == 1)                             // Executa o modo MP3 no SD
      { radio.setMute(1);
-       imprimeTexto("SD   ","E",5);
        audioProcessor.setSource(1, false, 3);
        executaMp3(DFPLAYER_DEVICE_SD); } 
-  else if(btnModoState == 3)                             // Executa o modo MP3 no USB
+  else if(settings.source == 2)                             // Executa o modo MP3 no USB
      { radio.setMute(1);
-       imprimeTexto("USB  ","E",5);
        audioProcessor.setSource(1, false, 3);
        executaMp3(DFPLAYER_DEVICE_U_DISK); }
   

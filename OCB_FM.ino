@@ -1,3 +1,13 @@
+/*
+ * OCB FM
+ *
+bool iniciaFM         ()
+void executaFM        ()
+void RDS_process      (uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) 
+void mostraFrequencia (int16_t _lin)
+void mostraVolume     ()
+void mostraSinal      (int16_t _col, int16_t _lin, int16_t _tam, int16_t _forma)
+*/
 /////////////////////
 // Inicializa FM   //
 /////////////////////
@@ -21,7 +31,7 @@ bool iniciaFM()
     Serial.println("Configurando o Radio...... ");
 #endif 
     radio.setBandFrequency(FIX_BAND, FIX_STATION);         // Define configuracoes de Banda e Frequencia inicial do radio
-    radio.setVolume(FIX_VOLUME);                           // Define configuracoes de Volume inicial do radio
+    radio.setVolume(radio.MAXVOLUME);                      // Define configuracoes de Volume inicial do radio
     radio.setMono(false);
     radio.setMute(false);
     radio.setSoftMute(false);
@@ -55,7 +65,7 @@ void executaFM()
   #define                   ROTARYMIN          0
   #define                   ROTARYMAX          15
 
-  encoderVol.setPosition(FIX_VOLUME / ROTARYSTEPS);
+  encoderVol.setPosition(vg_Volume / ROTARYSTEPS);
 
   while (!digitalRead(btnModoPin))
   {
@@ -82,8 +92,10 @@ void executaFM()
     Serial.print("Rotary Volume ");  Serial.println(_newPosVol);
 #endif    
       _lastPosVol = _newPosVol;
+      vg_Volume = _newPosVol;
       if (radio.getMute()) radio.setMute(!radio.getMute());
-      radio.setVolume(_lastPosVol);
+//      radio.setVolume(_lastPosVol);
+      audioProcessor.setVolume(map(vg_Volume, MIN_VOLUME_ENC, MAX_VOLUME_ENC, MIN_VOLUME_PT2314, MAX_VOLUME_PT2314));
       mostraVolume();    
     } 
 
@@ -108,9 +120,12 @@ void executaFM()
       mostraFrequencia(100); 
     } 
 
-    btnMuteState = digitalRead(btnMutePin);                   // Faz a Leitura do Botões
-    btnPrevState = digitalRead(btnPrevPin);
-    btnNextState = digitalRead(btnNextPin);
+    btnMuteState    = digitalRead(btnMutePin);                // Faz a Leitura do Botões
+    btnPrevState    = digitalRead(btnPrevPin);
+    btnNextState    = digitalRead(btnNextPin);
+    btnPreset1State = digitalRead(btnPreset1);
+    btnPreset2State = digitalRead(btnPreset2);
+    btnPreset3State = digitalRead(btnPreset3);
     
     if (btnMuteState == LOW) {                                // Verifica Botão de Mude      
       radio.setMute(!radio.getMute());
@@ -161,7 +176,8 @@ void executaFM()
   }
 }
 ////////////////////////////////////////////////////////////////
-void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) {
+void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) 
+{
   rds.processData(block1, block2, block3, block4);
 }
 ////////////////////////////////////////////////////////////////
@@ -203,7 +219,7 @@ void mostraVolume()
 #ifdef DEBUG_DTL
   Serial.print(" Volume  : ");Serial.println(radio.getVolume());
 #endif
-  mostraTermometro("Vol", radio.getVolume(), radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, monitor.height()-43, 20 );
+  mostraTermometro("Vol", vg_Volume, radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, monitor.height()-43, 20 );
 }
 ////////////////////////////////////////////////////////////////
 void mostraSinal(int16_t _col, int16_t _lin, int16_t _tam, int16_t _forma)

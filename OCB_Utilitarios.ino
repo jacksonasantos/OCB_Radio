@@ -1,4 +1,19 @@
-//////////////////////
+/*
+ * OCB Utilitarios
+ * 
+void iniciaTFT        () 
+void telaIntroducao   () 
+void preparaTFT       ()
+void imprimeTexto     (String pTexto, String pAlinhamento, int pLinha)
+void limpaArea        ()
+void mostraTermometro (String p_titulo, int16_t p_valor, int16_t p_tamanho, int16_t p_referencia, int16_t p_col_baixo, int16_t p_lin_baixo, int16_t p_largura )
+void mostra_relogio   ()
+void bmpDraw          (char *filename, int x, int y)
+uint16_t read16       (File f)
+uint32_t read32       (File f)
+*/
+
+///////////////////////
 // Introdução Radio  //
 ///////////////////////
 void iniciaTFT() 
@@ -105,6 +120,7 @@ void mostraTermometro(String p_titulo, int16_t p_valor, int16_t p_tamanho, int16
   monitor.setTextSize(2);
   int16_t _linTit = p_col_baixo - (((p_titulo.length()*12) - p_largura-6) / 2);
   monitor.setCursor(_linTit, _lin);
+  monitor.setTextColor(WHITE,BLACK);  
   monitor.println(p_titulo);
  
   _lin   = _lin - 15;

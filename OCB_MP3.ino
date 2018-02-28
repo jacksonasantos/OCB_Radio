@@ -1,15 +1,24 @@
+/*
+ * OCB MP3
+ *
+bool iniciaMP3        ()
+void executaMp3       (uint8_t device)
+void mostraEQMP3      ()
+void mostraVolumeMP3  ()
+void printDetail      (uint8_t type, int value, int p_posmsg)
+*/
 //////////////////////
 // Inicializa MP3   //
 /////////////////////
 bool iniciaMP3()
 {
-  Serial2.begin(9600);
-  if (!mp3player.begin(Serial2, true)) {                 // Usa softwareSerial para comunicacar com player - false para desabilitar ACK 
+  Serial1.begin(9600);
+  if (!mp3player.begin(Serial1, true)) {                 // Usa softwareSerial para comunicacar com player - false para desabilitar ACK 
     return -1;
   }
   else {
     mp3player.setTimeOut(500);                          	// Define o time out (500ms) da comunicacao serial
-    mp3player.outputSetting(false, FIX_VOLUME);          	// output setting, enable the output and set the gain
+    mp3player.outputSetting(false, 15);                 	// output setting, habilita saida das mensagens e configura o valor do "ganho"
     mp3player.enableDAC();                                // Enable On-chip DAC
     mp3player.volume(FIX_VOLUME);                         // Define o volume inicial
     mp3player.EQ(DFPLAYER_EQ_NORMAL);                     // Define a equalizacao do som
@@ -73,7 +82,8 @@ void executaMp3(uint8_t device)
       return;
     }                         
     
-    if ( mp3player.readState() == 256 ){                              // Verifia o Estado igual a parado e inicia automaticamento
+    if (( mp3player.readState() == 256 ) || 
+        ( mp3player.readState() == 512 )){                            // Verifia o Estado igual a parado e inicia automaticamento
       mp3player.start();
     }
     
@@ -81,7 +91,7 @@ void executaMp3(uint8_t device)
       mp3player.next();  
     }  
     
-    encoderVolMP3.tick();                                             // Verifica o encoder do Volume
+/*    encoderVolMP3.tick();                                             // Verifica o encoder do Volume
     
     int newPosVol = encoderVolMP3.getPosition() * ROTARYvolSTEPS;     // captura a posicao fisica atual e calcula a posicao logica
     if (newPosVol < ROTARYvolMIN) {
@@ -100,7 +110,7 @@ void executaMp3(uint8_t device)
       delay(500);
       mostraVolumeMP3();    
   } 
-
+*/
     btnMuteState = digitalRead(btnMutePin);
     btnPrevState = digitalRead(btnPrevPin);
     btnNextState = digitalRead(btnNextPin);
@@ -146,10 +156,10 @@ void executaMp3(uint8_t device)
 
     imprimeTexto( String(mp3player.readState(),DEC),"C", 150);
    
-    //if (mp3player.available()) {
+    if (mp3player.available()) {
       mostra_relogio();
       printDetail(mp3player.readType(), mp3player.read(),monitor.height()-20);            // Imprime a mensagem detalhada do DFPlayer para verificar com diferentes erros e/ou estados.
-   // }
+    }
     
   }
   mp3player.stop();    						                                    // Desliga o modulo
@@ -175,8 +185,8 @@ void mostraVolumeMP3()
 //////////////////////////////////
 // Apresenta detalhes do Player //
 //////////////////////////////////
-void printDetail(uint8_t type, int value, int p_posmsg ){
-  
+void printDetail(uint8_t type, int value, int p_posmsg )
+{
   monitor.setTextColor(WHITE,BLUE);  
   monitor.setTextSize(1);
 #ifdef DEBUG
