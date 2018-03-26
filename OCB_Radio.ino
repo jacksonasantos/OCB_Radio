@@ -18,10 +18,10 @@
 #include <RDSParser.h>                                          // Biblioteca Controlar o conteudo do RDS do radio
 #include <RotaryEncoder.h>                                      // Biblioteca Encoder´s
 #include <DFRobotDFPlayerMini.h>                                // Biblioteca Mini Player MP3 - SD
-#include <SD.h>                                                 // Biblioteca leitor de SD do TFT
+#include <SD.h>                                                 // Biblioteca Leitor de SD do TFT
 #include <Wire.h>                                               // Biblioteca conexão I2C para PT2314 - Processador de Audio
 #include <pt2314.h>                                             // Biblioteca Processador de Audio IC com: 4 entradas, 1 Saída Estéreo, Volume, Bass, Treble, e Balance
-#include <EEPROM.h>             // Load and Save settings
+#include <EEPROM.h>                                             // Biblioteca de manutenção da Memória interna do Arduino - Load and Save settings
 
 uint16_t                  vg_identifier  = 0x7575;              // Variavel de identificacao do tft LCD 2.4
 int                       vg_Volume      = 6;
@@ -33,6 +33,7 @@ int                       btnSetupState  = 0;                   // Variavel de c
 int                       btnPreset1State= 0;                   // Variavel de controle do Preset 1
 int                       btnPreset2State= 0;                   // Variavel de controle do Preset 2
 int                       btnPreset3State= 0;                   // Variavel de controle do Preset 3
+int                       btnEQState     = 0;                   // Variavel de controle do Equalizador do MP3
 float                     _colAnte       = 0;                   // Variavel de controle da coluna anterior utilizada no display da Frequencia no Radio
 char                      *modos[3]      = {"Radio", "SD   ", "USB  "};
 
@@ -45,9 +46,10 @@ const int                 btnNextPin     = 7;                      // 7         
 const int                 btnMutePin     = 8;                      // 8              - PWM         - Botão Mute
 const int                 btnOkPin       = 11;                     // 11             - PWM         - Botão OK
 const int                 btnSetupPin    = 30;                     // 30             - Digital     - Botão Setup o OCB
-const int                 btnPreset1     = 31;                     // 31             - Digital     - Botão Preset1
-const int                 btnPreset2     = 32;                     // 32             - Digital     - Botão Preset2
-const int                 btnPreset3     = 33;                     // 33             - Digital     - Botão Preset3
+const int                 btnPreset1Pin  = 31;                     // 31             - Digital     - Botão Preset1
+const int                 btnPreset2Pin  = 32;                     // 32             - Digital     - Botão Preset2
+const int                 btnPreset3Pin  = 33;                     // 33             - Digital     - Botão Preset3
+const int                 btnEQPin       = 33;                     // 33             - Digital     - Botão Equalizador MP3
 const int                 vg_chipSD      = 53;                     // 53             - Digital     - Controle Pino Iniciação do SD
 
                                                                 // Definicao Objetos
@@ -164,17 +166,18 @@ void setup()
   settings.source = 0;                                   // Define Radio como inicial
   saveSettings();
 
-  pinMode(btnModoPin ,INPUT);
-  pinMode(btnPrevPin ,INPUT);                            // Configura os Botoes de Controle
-  pinMode(btnNextPin ,INPUT);                             
-  pinMode(btnMutePin ,INPUT_PULLUP);                             
-  pinMode(btnOkPin   ,INPUT_PULLUP);                             
-  pinMode(btnSetupPin,INPUT);    
-  pinMode(btnPreset1 ,INPUT);    
-  pinMode(btnPreset2 ,INPUT);    
-  pinMode(btnPreset3 ,INPUT);    
-  pinMode(vg_PlayPin ,INPUT_PULLUP); 
-  pinMode(vg_chipSD  ,OUTPUT);
+  pinMode(btnModoPin    ,INPUT);
+  pinMode(btnPrevPin    ,INPUT);                         // Configura os Botoes de Controle
+  pinMode(btnNextPin    ,INPUT);                             
+  pinMode(btnMutePin    ,INPUT_PULLUP);                             
+  pinMode(btnOkPin      ,INPUT_PULLUP);                             
+  pinMode(btnSetupPin   ,INPUT);    
+  pinMode(btnPreset1Pin ,INPUT);    
+  pinMode(btnPreset2Pin ,INPUT);    
+  pinMode(btnPreset3Pin ,INPUT);    
+  pinMode(btnEQPin      ,INPUT);    
+  pinMode(vg_PlayPin    ,INPUT_PULLUP); 
+  pinMode(vg_chipSD     ,OUTPUT);
   
   digitalWrite(vg_PlayPin,HIGH); 
 

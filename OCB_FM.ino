@@ -67,6 +67,8 @@ void executaFM()
 
   encoderVol.setPosition(vg_Volume / ROTARYSTEPS);
 
+  loadSettings();
+  
   while (!digitalRead(btnModoPin))
   {
     if (digitalRead(btnSetupPin)){                             // Executa o modo Setup
@@ -96,7 +98,9 @@ void executaFM()
       if (radio.getMute()) radio.setMute(!radio.getMute());
 //      radio.setVolume(_lastPosVol);
       audioProcessor.setVolume(map(vg_Volume, MIN_VOLUME_ENC, MAX_VOLUME_ENC, MIN_VOLUME_PT2314, MAX_VOLUME_PT2314));
-      mostraVolume();    
+      mostraVolume();  
+      settings.currentVolume = vg_Volume;
+      saveSettings();  
     } 
 
     encoderFrq.tick();                                         // Verifica o encoder da Frequencia
@@ -123,13 +127,31 @@ void executaFM()
     btnMuteState    = digitalRead(btnMutePin);                // Faz a Leitura do Botões
     btnPrevState    = digitalRead(btnPrevPin);
     btnNextState    = digitalRead(btnNextPin);
-    btnPreset1State = digitalRead(btnPreset1);
-    btnPreset2State = digitalRead(btnPreset2);
-    btnPreset3State = digitalRead(btnPreset3);
+    btnPreset1State = digitalRead(btnPreset1Pin);
+    btnPreset2State = digitalRead(btnPreset2Pin);
+    btnPreset3State = digitalRead(btnPreset3Pin);
     
     if (btnMuteState == LOW) {                                // Verifica Botão de Mude      
       radio.setMute(!radio.getMute());
       delay(200);
+    }
+    else if (btnPreset1State == HIGH){                        // Verifica Seek Retroceder
+      radio.setFrequency(settings.presetFrequency[0]*radio.getFrequencyStep());
+      delay(10);
+      encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
+      mostraFrequencia(100); 
+    }
+    else if (btnPreset2State == HIGH){                        // Verifica Seek Retroceder
+      radio.setFrequency(settings.presetFrequency[1]*radio.getFrequencyStep());
+      delay(10);
+      encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
+      mostraFrequencia(100); 
+    }
+    else if (btnPreset3State == HIGH){                        // Verifica Seek Retroceder
+      radio.setFrequency(settings.presetFrequency[2]*radio.getFrequencyStep());
+      delay(10);
+      encoderFrq.setPosition(radio.getFrequency() / radio.getFrequencyStep());  // Posiciona o botão da Frequencia na Frequencia Escolhida
+      mostraFrequencia(100); 
     }
     else if (btnPrevState == HIGH){                           // Verifica Seek Retroceder
       radio.seekDown(true);
@@ -217,7 +239,7 @@ void mostraFrequencia(int16_t _lin)
 void mostraVolume()
 {
 #ifdef DEBUG_DTL
-  Serial.print(" Volume  : ");Serial.println(radio.getVolume());
+  Serial.print(" Volume  : ");Serial.println(vg_Volume);
 #endif
   mostraTermometro("Vol", vg_Volume, radio.MAXVOLUME, (radio.MAXVOLUME-2), 10, monitor.height()-43, 20 );
 }

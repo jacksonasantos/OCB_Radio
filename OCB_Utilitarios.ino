@@ -39,10 +39,9 @@ void telaIntroducao()
 #endif  
   // Preenche monitor com Fundo
   monitor.fillScreen(WHITE);
-  
-  bmpDraw("logo.bmp", 0, 0);
-  
- //delay(5000);
+  bmpDraw("vw1.bmp", 0, 0);
+  delay(5000);
+
 #ifdef DEBUG
   Serial.println("OK!");
 #endif    
@@ -91,7 +90,18 @@ void imprimeTexto(String pTexto, String pAlinhamento, int pLinha)
      _vcol = (monitor.width()-pTexto.length()*_tamFonte);
   else if (pAlinhamento=="E")
      _vcol = 5;
-
+/*
+#ifdef DEBUG_DTL
+  Serial.print( "_vcol ");  
+  Serial.print( _vcol );  
+  Serial.print( " pLinha " );  
+  Serial.print( pLinha );  
+  Serial.print( " pAlinhamento " );  
+  Serial.print( pAlinhamento );  
+  Serial.print( " pTexto " );  
+  Serial.println( pTexto );  
+#endif
+*/
   monitor.setCursor(_vcol, pLinha);
   monitor.println( pTexto );
 }
@@ -245,7 +255,7 @@ void bmpDraw(char *filename, int x, int y) {
 #endif  
 
     if(read16(bmpFile) == 1) {                                // # planes -- must be '1'
-      bmpDepth = read16(bmpFile);                             // bits per pixel
+      bmpDepth = read16(bmpFile);                             // the number of bits per pixel, which is the color depth of the image - Typical values are 1, 4, 8, 16, 24 and 32.
 #ifdef DEBUG_DTL
       Serial.print(F("    Bit Depth         : ")); 
       Serial.println(bmpDepth);
